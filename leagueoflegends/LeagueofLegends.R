@@ -61,7 +61,7 @@ monster <- read.csv("monsters.csv")
 tag_monster <- monster %>% 
   select(Address:Type) %>% 
   mutate(monster_Type = ifelse(Type %in% c('AIR_DRAGON','WATER_DRAGON', "EARTH_DRAGON","FIRE_DRAGON"), "mini_dragon",
-                                                                                   ifelse(Type %in% c("DRAGON", "ELDER_DRAGON", "BARON_NASHOR"),"dragon", "rift_herald"))) ## 
+        ifelse(Type %in% c("DRAGON", "ELDER_DRAGON", "BARON_NASHOR"),"dragon", "rift_herald"))) ## 
 clean_monster <- tag_monster %>% 
   mutate(monster_range = ifelse(Time <= 5,"(0,5]",
                        ifelse(Time <= 10,"(0,10]",
