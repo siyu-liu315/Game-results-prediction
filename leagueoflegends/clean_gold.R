@@ -23,24 +23,13 @@ clean <- clean_gold %>% select(-(3:15))
 ##clean monster
 monster <- read.csv("leagueoflegends/monsters.csv")
 tag_monster <- monster %>% 
- filter(Team == 'bDragons') %>% 
+  filter(Team %in% c('bBarons','bDragons','bHeralds'))%>% 
   select(Address:Type) %>% 
-  mutate(monster_type = 
-           ifelse(Type %in% c('AIR_DRAGON','WATER_DRAGON', "EARTH_DRAGON","FIRE_DRAGON","DRAGON"), "mini_dragon",
-                               ifelse(Type=="BARON_NASHOR","BARON", 
-                                      ifelse(Type == "ELDER_DRAGON","ELDER_DRAGON","rift_herald")))) %>% 
-  mutate(Time_int = ceiling(Time)) %>% 
-  arrange(Address,Type,Time_int)
+  mutate(Time_int = ceiling(Time))
 
 
 
-
-### could use loop to assign
-
-##vec <- c('AIR_DRAGON', 'EARTH_DRAGON', 'FIRE_DRAGON', 'WATER_DRAGON',
-           ##'DRAGON','BARON_NASHOR', 'ELDER_DRAGON', 'rift_herald')
-
-
+### diviede by different type of monster
 air_dragon <- tag_monster %>% filter(Type == 'AIR_DRAGON')
 earth_dragon <- tag_monster %>% filter(Type =='EARTH_DRAGON')
 fire_dragon <- tag_monster %>% filter(Type =='FIRE_DRAGON')
@@ -50,9 +39,16 @@ baron <- tag_monster %>% filter(Type =='BARON_NASHOR')
 elder_dragon <- tag_monster %>% filter(Type =='ELDER_DRAGON')
 rift_herald <- tag_monster %>% filter(Type =='rift_herald')
 
-tb <- tibble(match="", min = "",air_dragon= "")
+
+##get unique gamename
 game <- unique(monster$Address) 
 
+##create vector to hold all data
+matchname <- vector()
+min <- vector()
+type <- vector()
+
+##loop will output theree vetor:matchname, min, type, needed to be input df.
 for (n in game){
   x = 0
   match <- air_dragon %>% filter(Address == n)
@@ -64,38 +60,36 @@ for (n in game){
     else{
         x = x
         }
-     vec <- c(match = n, min = paste("min",i, sep = "_"),air_dragon = x)
-     tb <- rbind(tb,vec)
+    matchname <- c(matchname, n)
+    min<- c(min,paste("min",i, sep = "_"))
+    type<- c(type, x)
   }
   print(n)
 }
 
-x = 0
-for (n in game){
-  match <- air_dragon %>% filter(Address == n)
-  row = nrow(match)
-  for (i in 1:60) { 
-    if (i %in% match$Time_int[1:row])
-    {
-      x = x+1}
-    else{
-      x = x
-    }
-    vec <- c(match = n, min = paste("min",i, sep = "_"),type = x)
-    tb <- rbind(tb,vec)
-  }
-}
+
+## insert df.
+df_air_dragon <- data.frame(matchname = matchname,
+                 min = min,
+                 air_dragon = type)
 
 
+##need to check whether this loop correct.
+check <- merge(df_air_dragon,air_dragon, by.x = "matchname", by.y = "Address")
+check <- check %>% arrange(matchname,min)
 
+##save as csv
+write.csv(df_air_dragon,file = "clean_air_dragon.csv")
+write.csv(check,file = 'need_to_check.csv')
+
+
+##draft
+### could use loop to assign
+##vec <- c('AIR_DRAGON', 'EARTH_DRAGON', 'FIRE_DRAGON', 'WATER_DRAGON',
+##'DRAGON','BARON_NASHOR', 'ELDER_DRAGON', 'rift_herald')
+##tb <- tibble(match="", min = "",air_dragon= "")
+##count <- tag_monster %>% 
+##count(vars = c('Address', 'Type'))
 ##tb$min[i] <- paste("min",i, sep = "_")
 ##tb$AIR_DRAGON[i] <- x
 ##tb$match[i] <- n
-
-
-
-##
-count <- tag_monster %>% 
-  count(vars = c('Address', 'Type'))
-
-
