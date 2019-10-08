@@ -28,7 +28,6 @@ tag_monster <- monster %>%
   mutate(Time_int = ceiling(Time))
 
 
-
 ### diviede by different type of monster
 air_dragon <- tag_monster %>% filter(Type == 'AIR_DRAGON')
 earth_dragon <- tag_monster %>% filter(Type =='EARTH_DRAGON')
@@ -37,12 +36,14 @@ water_dragon <- tag_monster %>% filter(Type =='WATER_DRAGON')
 dragon <- tag_monster %>% filter(Type =='DRAGON')
 baron <- tag_monster %>% filter(Type =='BARON_NASHOR')
 elder_dragon <- tag_monster %>% filter(Type =='ELDER_DRAGON')
-rift_herald <- tag_monster %>% filter(Type =='rift_herald')
+rift_herald <- tag_monster %>% filter(Type =='RIFT_HERALD')
 
 
 ##get unique gamename
 game <- unique(monster$Address) 
 
+
+###########################################air_dragon###################################
 ##create vector to hold all data
 matchname <- vector()
 min <- vector()
@@ -81,6 +82,102 @@ check <- check %>% arrange(matchname,min)
 ##save as csv
 write.csv(df_air_dragon,file = "clean_air_dragon.csv")
 write.csv(check,file = 'need_to_check.csv')
+
+
+############################################rift_herald ########################################
+##create vector to hold all data
+matchname <- vector()
+min <- vector()
+type <- vector()
+
+for (n in game){
+  x = 0
+  match <- rift_herald  %>% filter(Address == n)
+  row = nrow(match)
+  for (i in 1:60) { 
+    if (i %in% match$Time_int[1:row])
+    {
+      x = x+1}
+    else{
+      x = x
+    }
+    matchname <- c(matchname, n)
+    min<- c(min,paste("min",i, sep = "_"))
+    type <- c(type, x)
+  }
+  print(n)
+}
+
+df_rift_herald <- data.frame(matchname = matchname,
+                            min = min,
+                            rift_herald = type)
+
+write.csv(df_rift_herald,file = "clean_rift_herald.csv")
+
+
+############################################baron ########################################
+##create vector to hold all data
+matchname <- vector()
+min <- vector()
+type <- vector()
+
+for (n in game){
+  x = 0
+  match <- baron  %>% filter(Address == n)
+  row = nrow(match)
+  for (i in 1:60) { 
+    if (i %in% match$Time_int[1:row])
+    {
+      x = x+1}
+    else{
+      x = x
+    }
+    matchname <- c(matchname, n)
+    min<- c(min,paste("min",i, sep = "_"))
+    type <- c(type, x)
+  }
+  print(n)
+}
+
+
+df_baron <- data.frame(matchname = matchname,
+                             min = min,
+                             baron = type)
+
+write.csv(df_baron,file = "clean_baron.csv")
+
+
+############################################elder_dragon ########################################
+##create vector to hold all data
+matchname <- vector()
+min <- vector()
+type <- vector()
+
+for (n in game){
+  x = 0
+  match <- elder_dragon  %>% filter(Address == n)
+  row = nrow(match)
+  for (i in 1:60) { 
+    if (i %in% match$Time_int[1:row])
+    {
+      x = x+1}
+    else{
+      x = x
+    }
+    matchname <- c(matchname, n)
+    min<- c(min,paste("min",i, sep = "_"))
+    type <- c(type, x)
+  }
+  print(n)
+}
+
+
+df_elder_dragon <- data.frame(matchname = matchname,
+                              min = min,
+                              elder_dragon = type)
+
+write.csv(df_elder_dragon,file = "clean_elder_dragon.csv")
+
 
 
 ##draft
