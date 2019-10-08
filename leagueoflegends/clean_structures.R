@@ -16,7 +16,7 @@ class(bhome$Type)
 bhome$Type <- as.vector(bhome$Type)
 bhome$Type <- str_replace(bhome$Type, "FOUNTAIN_TURRET", "BASE_TURRET")
 ### 利用下面的数据确定数据对错
-tem <- structures %>% filter(Type == "NEXUS_TURRET") %>% view()
+tem <- structures %>% filter(Address == "055b17da8456fdc8") %>% view()
 
 bhome %>% mutate(top_outer = (Lane == "TOP_LANE" & Type == "OUTER_TURRET"),
                  top_inner = (Lane == "TOP_LANE" & Type == "INNER_TURRET"),
@@ -35,5 +35,11 @@ tower <- ifelse(tower == "TRUE", 1, 0)
 b_tower <- cbind(infor, tower)
 ### 检测是否每一分钟只推掉一座塔
 rowSums(tower) %>% unique()
+### 把team inhibit 和time 转换成0
+b_tower$Team <- str_replace(b_tower$Team, "bInhibs", "0")
+view(b_tower$Time)
+b_tower$Time <- str_replace(b_tower$Time, "NA", "0")
+b_tower %>% filter(Time == "NA")
+
 
 
