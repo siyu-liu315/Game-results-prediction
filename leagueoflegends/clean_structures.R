@@ -59,8 +59,14 @@ names(b_tower)[5] <- 'min'
 
 ##left join and select
 merge <- left_join(monster, b_tower, by = c('matchname', 'min'))%>% arrange(matchname)
-merge <- merge[-(11:13)]
+merge <- merge[c(1,2,14:22)]
 
 ###repalce Na
 merge[is.na(merge)] <- 0
+
+##accumulate
+try <- merge %>% group_by(matchname) %>% 
+  dplyr::mutate(top_outer = cumsum(top_outer),
+                ) 
+
 

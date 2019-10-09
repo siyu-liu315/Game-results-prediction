@@ -6,7 +6,7 @@ library(plyr)
 
 ### clean gold ##
 gold <- read.csv("leagueoflegends/gold.csv")
-clean_gold <- gold %>% 
+cclean_gold <- gold %>% 
   filter(is.na(min_61)) %>%  
   select(Address:min_60) %>% 
   gather(min_1:min_60,key = 'min',value = 'golddiff')%>% 

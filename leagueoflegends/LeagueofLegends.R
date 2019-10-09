@@ -94,3 +94,7 @@ merge3 <- merge3 %>% select(-'Address')
 merge3 %>% group_by(blueTeamTag, redTeamTag) %>% 
   mutate(game_count = count())
 
+####
+
+kills <- read.csv('leagueoflegends/kills.csv')
+
