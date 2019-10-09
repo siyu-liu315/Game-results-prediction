@@ -21,3 +21,5 @@ monster <- merge(monster, rift_herald, by = c('matchname', 'min'))
 monster <- merge(monster, water_dragon, by = c('matchname', 'min'))
 monster <- merge(monster,elder_dragon,by = c('matchname','min'))
 monster <- monster[c(1:6,8,10,12,14)]
+
+monster <- monster %>% arrange(matchname, min)
