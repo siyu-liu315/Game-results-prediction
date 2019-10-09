@@ -50,5 +50,3 @@ b_tower <- na.omit(b_tower)
 
 View(b_tower)
 
-
-

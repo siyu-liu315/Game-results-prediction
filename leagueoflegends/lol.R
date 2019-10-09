@@ -2,7 +2,7 @@ library(tidyverse)
 library(dplyr)
 library(varhandle)
 library(readr)
-s
+
 ###### load the data 
 
 kills <- read.csv(file = "kills.csv")
@@ -23,6 +23,8 @@ kills$Time <- as.integer(kills$Time) + 1
 monsters$Address <- gsub(".*=","",monsters$Address)
 monsters$Time <- as.integer(monsters$Time) + 1
 
+
+View(monsters)
 ############2015 SP
 ###### Season 2015 top 3 winrate champion at top lane
 bluewin_2015_sp_top <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 1) %>% count(blueTopChamp) %>% arrange(desc(n))
