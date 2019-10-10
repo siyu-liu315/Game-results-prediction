@@ -2,7 +2,6 @@ library(tidyverse)
 library(dplyr)
 library(varhandle)
 library(plyr)
-### 把address名字缩短，把时间调成整数
 structures <- read.csv("leagueoflegends/structures.csv")
 structures$Address <- gsub(".*=","",structures$Address)
 structures$Time <- as.integer(structures$Time) + 1
@@ -44,14 +43,12 @@ write_excel_csv(b_tower,file = "temp1")
 teamname <- unique(b_tower$Address) %>% as.matrix()
 teamname <- teamname[rep(seq_len(nrow(teamname)), each=60),]
 teamname$Time <- teamname$Time
-for (i in teamname) {
-  
-  
-}
 
+### add min_
+b_tower$Time <- paste("min", b_tower$Time,sep="_")
 
-
-
+### change the Address to matchname
+colnames(b_tower)[colnames(b_tower)=="Address"] <- "matchname"
 
 
 
