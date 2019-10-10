@@ -173,12 +173,16 @@ yy <- merge %>% group_by(matchname) %>%
 
 yy <- yy[-(3:22)]
 
+<<<<<<< HEAD
 merge<- left_join(str, yy, by=c('matchname', 'min')) %>%
   left_join(., killing, by=c('matchname', 'min')) %>% 
   left_join(.,b_tower, by = c('matchname','min'))
 
 final <- left_join(gold, yy,by = c('matchname', 'min'))
 
+=======
+final <- left_join(gold, yy,by = c('matchname', 'min'))
+>>>>>>> 61321282ced06ad2794e03f26bf434389a1bc5f7
 final <- na.omit(final)
 
 dim(final)
