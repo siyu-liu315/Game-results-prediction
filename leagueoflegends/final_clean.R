@@ -26,7 +26,6 @@ bhome$Type <- str_replace(bhome$Type, "FOUNTAIN_TURRET", "BASE_TURRET")
 tem <- structures %>% filter(Address == "055b17da8456fdc8") 
 
 #### create columns for each type if tower and inhibiors
-
 bhome %>% mutate(top_outer = (Lane == "TOP_LANE" & Type == "OUTER_TURRET"),
                  top_inner = (Lane == "TOP_LANE" & Type == "INNER_TURRET"),
                  top_base = (Lane == "TOP_LANE" & Type == "BASE_TURRET")) %>%
@@ -123,22 +122,33 @@ new_var <- paste("min", x, sep = '_')
 str[[new_var]] <- rep(x,7620)}
 str <- str %>% gather(key = time ,value = min,2:61) 
 str <- str[-2]
+<<<<<<< HEAD
 names(str)[1] <- "matchname"
 str$matchname <- gsub(".*=","",str$matchname)
 str
 View(str)
-### merge with right struture first to handle NA.
+=======
+str$matchname <- gsub(".*=","",str$matchname)
 
-merge <- left_join(str, monster, by=c('matchname', 'min')) %>%
+>>>>>>> 356611d4e4dd53590c8a9f1321e0d900e65da24c
+### merge with right struture first to handle NA.
+merge<- left_join(str, monster, by=c('matchname', 'min')) %>%
   left_join(., killing, by=c('matchname', 'min')) %>% 
+<<<<<<< HEAD
   left_join(.,b_tower,by=c('matchname', 'min'))
 View(merge)
 View(killing)
 View(b_tower)
 
 
+=======
+  left_join(.,b_tower, by = c('matchname','min'))
+
+merge[is.na(merge)] <- 0
+
+>>>>>>> 356611d4e4dd53590c8a9f1321e0d900e65da24c
 ##accumulate number
-accum_b_tower <- b_tower %>% group_by(matchname) %>% 
+yy <- merge %>% group_by(matchname) %>% 
   arrange(matchname, min) %>% 
   dplyr::mutate(top_outer_cum = cumsum(top_outer),
                 top_inner_cum = cumsum(top_inner),
@@ -161,17 +171,15 @@ accum_b_tower <- b_tower %>% group_by(matchname) %>%
                 elder_dragon_cum = cumsum(ELDER_DRAGON),
                 rift_herald_cum = cumsum(RIFT_HERALD))
 
-accum_b_tower <- accum_b_tower[-(12:22)]
+yy <- yy[-(3:22)]
 
 merge<- left_join(str, monster, by=c('matchname', 'min')) %>%
   left_join(., killing, by=c('matchname', 'min')) %>% 
   left_join(.,b_tower, by = c('matchname','min'))
 
+final <- left_join(gold, merge,by = c('matchname', 'min'))
 
-
-
-
-
+final <- na.omit(final)
 
 
 
