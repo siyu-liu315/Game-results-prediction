@@ -156,12 +156,7 @@ yy <- merge %>% group_by(matchname) %>%
 
 yy <- yy[-(3:22)]
 
-merge<- left_join(str, monster, by=c('matchname', 'min')) %>%
-  left_join(., killing, by=c('matchname', 'min')) %>% 
-  left_join(.,b_tower, by = c('matchname','min'))
-
-final <- left_join(gold, merge,by = c('matchname', 'min'))
-
+final <- left_join(gold, yy,by = c('matchname', 'min'))
 final <- na.omit(final)
 
 
