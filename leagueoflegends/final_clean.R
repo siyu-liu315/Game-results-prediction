@@ -51,37 +51,55 @@ rowSums(tower) %>% unique()
 ### remove the NA
 b_tower <- na.omit(b_tower)
 
+####change column name
+b_tower <- b_tower[c(-2:-4)]
+names(b_tower)[1]<-"matchname"
+names(b_tower)[2] <- 'min'
+
+########################################clean gold###########
+### clean gold ##
+gold <- read.csv("leagueoflegends/gold.csv")
+clean_gold <- gold %>% 
+  filter(is.na(min_61)) %>%  
+  select(Address:min_60) %>% 
+  gather(min_1:min_60,key = 'min',value = 'golddiff')%>% 
+  spread(key = Type, value  = golddiff) %>% arrange(min, Address) %>% 
+  mutate(golddiffADC = goldblueADC -goldredADC, 
+         golddiffJungle = goldblueJungle - goldredJungle,
+         golddiffMiddle = goldblueMiddle - goldredMiddle,
+         golddiffSupport = goldblueSupport - goldredSupport,
+         golddiffTop = goldblueTop-goldredTop)
+
+gold <- clean_gold %>% select(-(3:15))
+gold <- separate(gold, min, into =c('del', 'min'), "_")
+gold <- gold[-2]
+gold$min <- as.numeric(gold$min)
+
+names(gold)[1]<-"matchname"
+gold$matchname <- gsub(".*=","",gold$matchname)
+
 #########################################monster#########################################
 
-air_dragon <- read.csv('./clean_air_dragon.csv')
-baron <- read.csv('./clean_baron.csv')
-dragon <- read.csv('./clean_dragon.csv')
-earth_dragon <- read.csv('./clean_earth_dragon.csv')
-elder_dragon <- read.csv('./clean_elder_dragon.csv')
-fire_dragon <- read.csv('./clean_fire_dragon.csv')
-rift_herald <- read.csv('./clean_rift_herald.csv')
-water_dragon <- read.csv('./clean_water_dragon.csv')
+monster <- read.csv("leagueoflegends/monsters.csv")
+match_id <- unique(monster$Address)
 
-monster <- merge(air_dragon,baron, by = c('matchname','min'))
-monster <- merge(monster, dragon, by = c('matchname','min'))
-monster <- merge(monster, earth_dragon, by = c('matchname','min'))
-monster <- monster[c(1,2,4,6,8,10)]
-monster <- merge(monster, fire_dragon,by= c('matchname','min'))
-monster <- merge(monster, rift_herald, by = c('matchname', 'min'))
-monster <- merge(monster, water_dragon, by = c('matchname', 'min'))
-monster <- merge(monster,elder_dragon,by = c('matchname','min'))
-monster <- monster[c(1:6,8,10,12,14)]
+monster <- monster %>% 
+  filter(Team %in% c('bBarons','bDragons','bHeralds'))%>% 
+  select(Address:Type) %>% 
+  mutate(Time_int = ceiling(Time)) %>% 
+  mutate(Count = 1)
+
+monster <- spread(monster, key = Type, value = Count)%>% 
+  arrange(Address, Time_int)
+
+monster <- monster[c(-2,-3)]
+
 
 ##change column name
+names(monster)[1]<-"matchname"
+names(monster)[2] <- 'min'
 monster$matchname <- gsub(".*=","",monster$matchname)
-names(b_tower)[1]<-"matchname"
-names(b_tower)[5] <- 'min'
-
-
-##change min to number###
-monster <- separate(monster, min, into =c('del', 'min'), "_")
-monster <- monster[-2]
-monster$min <- as.numeric(monster$min)
+monster[is.na(monster)] <- 0
 
 
 ###################### join kills.and monster & tower ##############
@@ -96,20 +114,28 @@ killing <- kills %>%
 killing <- killing[-2]
 names(killing)[1] <- "matchname"
 names(killing)[2] <- 'min'
-merge1<- left_join(monster, killing, by = c('matchname', 'min'))
 
-names(b_tower)[1] <- "matchname"
-names(b_tower)[5] <- 'min'
-b_tower <- b_tower[-(2:4)]
+#####build a right structure. 
+str <- data.frame(matchname = match_id)
+for (x in 1:60){
+new_var <- paste("min", x, sep = '_')
+str[[new_var]] <- rep(x,7620)}
+str <- str %>% gather(key = time ,value = min,2:61) 
+str <- str[-2]
+
+str
+### merge with right struture first to handle NA.
+
+merge <- left_join(str, monster, by=c('matchname', 'min')) %>%
+  left_join(., killing, by=c('matchname', 'min')) %>% 
+  left_join(.,b_tower,by=c('matchname', 'min'))
 
 
-merge <- left_join(merge1, b_tower, by = c('matchname', 'min'))
+min_40 <- merge %>% filter(min == 40)
 
-###repalce Na
-merge[is.na(merge)] <- 0
-
-##accumulate
-try <- merge %>% group_by(matchname) %>% 
+##accumulate number
+accum_b_tower <- b_tower %>% group_by(matchname) %>% 
+  arrange(matchname, min) %>% 
   dplyr::mutate(top_outer_cum = cumsum(top_outer),
                 top_inner_cum = cumsum(top_inner),
                 top_base_cum = cumsum(top_base),
@@ -121,6 +147,36 @@ try <- merge %>% group_by(matchname) %>%
                 bot_inner_cum = cumsum(bot_inner),
                 bot_base_cum = cumsum(bot_base),
                 nexus_turret_cum = cumsum(nexus_turret),
-                killers_cum = cumsum(killers))
+                killers_cum = cumsum(killers),
+                air_dragon_cum = cumsum(AIR_DRAGON),
+                earth_dragon_cum = cumsum(EARTH_DRAGON),
+                fire_dragon_cum = cumsum(FIRE_DRAGON),
+                water_dragon_cum = cumsum(WATER_DRAGON),
+                dragon_cum = cumsum(DRAGON),
+                baron_cum = cumsum(BARON_NASHOR),
+                elder_dragon_cum = cumsum(ELDER_DRAGON),
+                rift_herald_cum = cumsum(RIFT_HERALD))
 
-final <- try[-(12:22)]
+accum_b_tower <- accum_b_tower[-(12:22)]
+
+merge<- left_join(str, monster, by=c('matchname', 'min')) %>%
+  left_join(., killing, by=c('matchname', 'min')) %>% 
+  left_join(.,b_tower, by = c('matchname','min'))
+
+
+
+
+
+
+
+
+
+
+##DRAFT
+####change column name
+##names(b_tower)[1]<-"matchname"
+##names(b_tower)[2] <- 'min'
+##b_tower$matchname <- gsub(".*=","",monster$matchname)
+
+##
+##
