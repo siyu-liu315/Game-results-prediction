@@ -3,6 +3,8 @@ library(dplyr)
 library(varhandle)
 library(plyr)
 
+
+
 air_dragon <- read.csv('./clean_air_dragon.csv')
 baron <- read.csv('./clean_baron.csv')
 dragon <- read.csv('./clean_dragon.csv')
@@ -21,3 +23,10 @@ monster <- merge(monster, rift_herald, by = c('matchname', 'min'))
 monster <- merge(monster, water_dragon, by = c('matchname', 'min'))
 monster <- merge(monster,elder_dragon,by = c('matchname','min'))
 monster <- monster[c(1:6,8,10,12,14)]
+
+monster <- monster %>% arrange(matchname, min)
+
+matchinfo <- read.csv("leagueoflegends/matchinfo.csv")
+matchinfo <- matchinfo %>% select(Address, bResult)
+names(matchinfo)[1] <- matchinfo
+trail <- merge(matchinfo, monster, by.x = 'Address', by.y  = 'monster')

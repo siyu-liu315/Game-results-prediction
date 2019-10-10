@@ -2,6 +2,11 @@ library(tidyverse)
 library(dplyr)
 library(varhandle)
 library(plyr)
+<<<<<<< HEAD
+=======
+library(bigrquery)
+### shorten the address to unique game ID
+>>>>>>> 9435e2f0072816ab517d31e66638aa56956dc80b
 structures <- read.csv("leagueoflegends/structures.csv")
 structures$Address <- gsub(".*=","",structures$Address)
 structures$Time <- as.integer(structures$Time) + 1
@@ -51,6 +56,27 @@ b_tower$Time <- paste("min", b_tower$Time,sep="_")
 colnames(b_tower)[colnames(b_tower)=="Address"] <- "matchname"
 
 
+<<<<<<< HEAD
+=======
+####change Time formate
+b_tower$Time <- paste('min',b_tower$Time,sep = '_')
+>>>>>>> 9435e2f0072816ab517d31e66638aa56956dc80b
 
+##change column name
+monster$matchname <- gsub(".*=","",monster$matchname)
+names(b_tower)[1]<-"matchname"
+names(b_tower)[5] <- 'min'
+
+##left join and select
+merge <- left_join(monster, b_tower, by = c('matchname', 'min'))%>% arrange(matchname)
+merge <- merge[c(1,2,14:22)]
+
+###repalce Na
+merge[is.na(merge)] <- 0
+
+##accumulate
+try <- merge %>% group_by(matchname) %>% 
+  dplyr::mutate(top_outer = cumsum(top_outer),
+                ) 
 
 
