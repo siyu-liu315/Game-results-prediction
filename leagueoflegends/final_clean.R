@@ -159,6 +159,8 @@ yy <- yy[-(3:22)]
 final <- left_join(gold, yy,by = c('matchname', 'min'))
 final <- na.omit(final)
 
+## Subsets data by minute and puts into a list
+final_list_minutes <- split(final, final$min)
 
 
 
@@ -170,3 +172,7 @@ final <- na.omit(final)
 
 ##
 ##
+
+
+
+
