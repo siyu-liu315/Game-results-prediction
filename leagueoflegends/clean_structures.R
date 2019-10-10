@@ -2,6 +2,7 @@ library(tidyverse)
 library(dplyr)
 library(varhandle)
 library(plyr)
+library(bigrquery)
 ### shorten the address to unique game ID
 structures <- read.csv("leagueoflegends/structures.csv")
 structures$Address <- gsub(".*=","",structures$Address)
@@ -47,6 +48,22 @@ rowSums(tower) %>% unique()
 
 ### remove the NA
 b_tower <- na.omit(b_tower)
-
 View(b_tower)
 
+####change Time formate
+b_tower$Time <- paste('min',b_tower$Time,sep = '_')
+
+##change column name
+monster$matchname <- gsub(".*=","",monster$matchname)
+names(b_tower)[1]<-"matchname"
+names(b_tower)[5] <- 'min'
+
+View(b_tower)
+##left join and select
+merge <- left_join(monster, b_tower, by = c('matchname', 'min'))%>% arrange(matchname)
+merge <- merge[-c(1,2,14,22)]
+
+###repalce Na
+merge[is.na(merge)] <- 0
+
+#######

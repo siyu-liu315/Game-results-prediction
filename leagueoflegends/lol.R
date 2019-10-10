@@ -24,43 +24,40 @@ monsters$Address <- gsub(".*=","",monsters$Address)
 monsters$Time <- as.integer(monsters$Time) + 1
 
 
-View(monsters)
+View(matchinfo)
 ############2015 SP
 ###### Season 2015 top 3 winrate champion at top lane
-bluewin_2015_sp_top <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 1) %>% count(blueTopChamp) %>% arrange(desc(n))
-redwin_2015_sp_top <- matchinfo %>% filter(Year == 2015 & Season == "Spring" & bResult == 0) %>% count(redTopChamp) %>% arrange(desc(n))
+dee <- matchinfo %>% group_by(Year, Season)
+View(dee)
+bluewin_2015_sp_top <- matchinfo %>% filter(Year == 2015 & Sason == "Spring" &bResult == 1) %>% dplyr::count(blueTopChamp) %>% arrange(desc(n))
 blue_2015sp_top <- head(bluewin_2015_sp_top, 3)
 red_2015sp_top <- head(redwin_2015_sp_top, 3)
 
 #### Season 2015 top 3 winrate champion at mid lane
-bluewin_2015_sp_mid <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 1) %>% count(blueMiddleChamp) %>% arrange(desc(n))
-redwin_2015_sp_mid <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 0) %>% count(redMiddleChamp) %>% arrange(desc(n))
+bluewin_2015_sp_mid <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 1) %>% dplyr::count(blueMiddleChamp) %>% arrange(desc(n))
 blue_2015sp_mid <- head(bluewin_2015_sp_mid, 3)
 red_2015sp_mid <- head(redwin_2015_sp_mid, 3)
 
 
 ### Season 2015 top 3 winrate champion at dammage carry
-bluewin_2015_sp_adc <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 1) %>% count(blueADCChamp) %>% arrange(desc(n))
-redwin_2015_sp_adc <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 0) %>% count(redADCChamp) %>% arrange(desc(n))
+bluewin_2015_sp_adc <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 1) %>% dplyr::count(blueADCChamp) %>% arrange(desc(n))
 blue_2015sp_adc <- head(bluewin_2015_sp_adc, 3)
 red_2015sp_adc <- head(redwin_2015_sp_adc, 3)
 
 ### Season 2015 top 3 winrate champion at support 
-bluewin_2015_sp_sup <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 1) %>% count(blueSupportChamp) %>% arrange(desc(n))
-redwin_2015_sp_sup <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 0) %>% count(redSupportChamp) %>% arrange(desc(n))
+bluewin_2015_sp_sup <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 1) %>% dplyr::count(blueSupportChamp) %>% arrange(desc(n))
 blue_2015sp_sup <- head(bluewin_2015_sp_sup, 3)
 red_2015sp_sup <- head(redwin_2015_sp_sup, 3)
 
 ### Seasib 2015 top 3 winrate champion at jungle
-bluewin_2015_sp_jg <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 1) %>% count(blueJungleChamp) %>% arrange(desc(n))
-redwin_2015_sp_jg <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 0) %>% count(redJungleChamp) %>% arrange(desc(n))
+bluewin_2015_sp_jg <- matchinfo %>% filter(Year == 2015 & Season == "Spring" &bResult == 1) %>% dplyr::count(blueJungleChamp) %>% arrange(desc(n))
 blue_2015sp_jun <- head(bluewin_2015_sp_top, 3)
 red_2015sp_jun <- head(redwin_2015_sp_top, 3)
 
 
 ###### Season 2015 top 3 winrate champion at top lane
-bluewin_2015_su_top <- matchinfo %>% filter(Year == 2015 & Season == "Summer" &bResult == 1) %>% count(blueTopChamp) %>% arrange(desc(n))
-redwin_2015_sp_top <- matchinfo %>% filter(Year == 2015 & Season == "Summer" & bResult == 0) %>% count(redTopChamp) %>% arrange(desc(n))
+bluewin_2015_su_top <- matchinfo %>% filter(Year == 2015 & Season == "Summer" &bResult == 1) %>% dplyr::count(blueTopChamp) %>% arrange(desc(n))
+redwin_2015_sp_top <- matchinfo %>% filter(Year == 2015 & Season == "Summer" & bResult == 0) %>% dplyr::count(redTopChamp) %>% arrange(desc(n))
 
 #### Season 2015 top 3 winrate champion at mid lane
 bluewin_2015_su_mid <- matchinfo %>% filter(Year == 2015 & Season == "Summer" &bResult == 1) %>% count(blueMiddleChamp) %>% arrange(desc(n))
