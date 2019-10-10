@@ -134,7 +134,6 @@ str$matchname <- gsub(".*=","",str$matchname)
 ### merge with right struture first to handle NA.
 merge<- left_join(str, monster, by=c('matchname', 'min')) %>%
   left_join(., killing, by=c('matchname', 'min')) %>% 
- HEAD
   left_join(.,b_tower,by=c('matchname', 'min'))
 View(merge)
 View(killing)
@@ -173,25 +172,22 @@ yy <- merge %>% group_by(matchname) %>%
 
 yy <- yy[-(3:22)]
 
-<<<<<<< HEAD
+
 merge<- left_join(str, yy, by=c('matchname', 'min')) %>%
   left_join(., killing, by=c('matchname', 'min')) %>% 
   left_join(.,b_tower, by = c('matchname','min'))
 
 final <- left_join(gold, yy,by = c('matchname', 'min'))
 
-<<<<<<< HEAD
-=======
-final <- left_join(gold, yy,by = c('matchname', 'min'))
->>>>>>> 61321282ced06ad2794e03f26bf434389a1bc5f7
 final <- na.omit(final)
-=======
-## Subsets data by minute and puts into a list
-final_list_minutes <- split(final, final$min)
->>>>>>> 6a894be9eebffaef3caf40e47099d95613ba9213
 
-dim(final)
-dim(gold)
+matchinfo <- read.csv("leagueoflegends/matchinfo.csv")
+View(matchinfo)
+match <- matchinfo[c("bResult", "Address")]
+names(match)[2] <- "matchname"
+match$matchname <- gsub(".*=","",match$matchname)
+View(match)
+final <- left_join(final, match, by = "matchname")
 
 
 ##DRAFT
@@ -202,7 +198,3 @@ dim(gold)
 
 ##
 ##
-
-
-
-
