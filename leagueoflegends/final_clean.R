@@ -193,6 +193,8 @@ final <- left_join(final, match, by = "matchname")
 
 >>>>>>> 4fca984d4ef452e82a1729c6841bb7495c4734db
 
+final_list_minutes <- split(final, final$min)
+
 ##DRAFT
 ####change column name
 ##names(b_tower)[1]<-"matchname"
