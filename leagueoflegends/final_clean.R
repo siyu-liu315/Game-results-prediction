@@ -122,31 +122,31 @@ new_var <- paste("min", x, sep = '_')
 str[[new_var]] <- rep(x,7620)}
 str <- str %>% gather(key = time ,value = min,2:61) 
 str <- str[-2]
-<<<<<<< HEAD
+
 names(str)[1] <- "matchname"
 str$matchname <- gsub(".*=","",str$matchname)
 str
 View(str)
-=======
+
 str$matchname <- gsub(".*=","",str$matchname)
 
->>>>>>> 356611d4e4dd53590c8a9f1321e0d900e65da24c
+
 ### merge with right struture first to handle NA.
 merge<- left_join(str, monster, by=c('matchname', 'min')) %>%
   left_join(., killing, by=c('matchname', 'min')) %>% 
-<<<<<<< HEAD
+ HEAD
   left_join(.,b_tower,by=c('matchname', 'min'))
 View(merge)
 View(killing)
 View(b_tower)
 
 
-=======
+
   left_join(.,b_tower, by = c('matchname','min'))
 
 merge[is.na(merge)] <- 0
 
->>>>>>> 356611d4e4dd53590c8a9f1321e0d900e65da24c
+
 ##accumulate number
 yy <- merge %>% group_by(matchname) %>% 
   arrange(matchname, min) %>% 
@@ -173,15 +173,16 @@ yy <- merge %>% group_by(matchname) %>%
 
 yy <- yy[-(3:22)]
 
-merge<- left_join(str, monster, by=c('matchname', 'min')) %>%
+merge<- left_join(str, yy, by=c('matchname', 'min')) %>%
   left_join(., killing, by=c('matchname', 'min')) %>% 
   left_join(.,b_tower, by = c('matchname','min'))
 
-final <- left_join(gold, merge,by = c('matchname', 'min'))
+final <- left_join(gold, yy,by = c('matchname', 'min'))
 
 final <- na.omit(final)
 
-
+dim(final)
+dim(gold)
 
 
 ##DRAFT
