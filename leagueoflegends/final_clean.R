@@ -54,7 +54,6 @@ b_tower <- na.omit(b_tower)
 b_tower <- b_tower[c(-2:-4)]
 names(b_tower)[1]<-"matchname"
 names(b_tower)[2] <- 'min'
-View(b_tower)
 
 ########################################clean gold###########
 ### clean gold ##
@@ -126,7 +125,7 @@ str <- str[-2]
 names(str)[1] <- "matchname"
 str$matchname <- gsub(".*=","",str$matchname)
 str
-View(str)
+
 
 str$matchname <- gsub(".*=","",str$matchname)
 
@@ -135,13 +134,6 @@ str$matchname <- gsub(".*=","",str$matchname)
 merge<- left_join(str, monster, by=c('matchname', 'min')) %>%
   left_join(., killing, by=c('matchname', 'min')) %>% 
   left_join(.,b_tower,by=c('matchname', 'min'))
-View(merge)
-View(killing)
-View(b_tower)
-
-
-
-  left_join(.,b_tower, by = c('matchname','min'))
 
 merge[is.na(merge)] <- 0
 
@@ -178,15 +170,12 @@ merge<- left_join(str, yy, by=c('matchname', 'min')) %>%
   left_join(.,b_tower, by = c('matchname','min'))
 
 final <- left_join(gold, yy,by = c('matchname', 'min'))
-
 final <- na.omit(final)
 
 matchinfo <- read.csv("leagueoflegends/matchinfo.csv")
-View(matchinfo)
 match <- matchinfo[c("bResult", "Address")]
 names(match)[2] <- "matchname"
 match$matchname <- gsub(".*=","",match$matchname)
-View(match)
 final <- left_join(final, match, by = "matchname")
 
 
