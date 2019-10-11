@@ -62,8 +62,8 @@ tower_duplicate <- tower_merge %>% filter(n>1)
 tower_keep <- tower_merge %>% filter(n == 1)
 
 tower_agg = aggregate(tower_duplicate[c(-1,-2)], 
-                by = list(tower_duplicate$matchname,tower_duplicate$min),
-                FUN = sum)
+                      by = list(tower_duplicate$matchname,tower_duplicate$min),
+                      FUN = sum)
 
 names(tower_agg)[1]<-"matchname"
 names(tower_agg)[2] <- 'min'
@@ -147,8 +147,8 @@ names(clean_killing)[3] <- 'killer'
 #####build a right structure. 
 str <- data.frame(matchname = match_id)
 for (x in 1:60){
-new_var <- paste("min", x, sep = '_')
-str[[new_var]] <- rep(x,7620)}
+  new_var <- paste("min", x, sep = '_')
+  str[[new_var]] <- rep(x,7620)}
 str <- str %>% gather(key = time ,value = min,2:61) 
 str <- str[-2]
 
