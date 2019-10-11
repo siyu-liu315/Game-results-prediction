@@ -54,14 +54,10 @@ b_tower <- na.omit(b_tower)
 b_tower <- b_tower[c(-2:-4)]
 names(b_tower)[1]<-"matchname"
 names(b_tower)[2] <- 'min'
-<<<<<<< HEAD
-=======
 
-#####testing duplicate#####
+
 xxx <- b_tower %>% dplyr::count(matchname, min)
 
-
->>>>>>> e7be0c891e5d69edbdbda7d52bd75b5c44f41c48
 
 ########################################clean gold###########
 ### clean gold ##
@@ -135,24 +131,20 @@ str <- str[-2]
 
 names(str)[1] <- "matchname"
 str$matchname <- gsub(".*=","",str$matchname)
-<<<<<<< HEAD
 str
 
 
 str$matchname <- gsub(".*=","",str$matchname)
-=======
->>>>>>> e7be0c891e5d69edbdbda7d52bd75b5c44f41c48
 
 
 ### merge with right struture first to handle NA.
 merge<- left_join(str, monster, by=c('matchname', 'min'))
   left_join(., killing, by=c('matchname', 'min')) %>% 
   left_join(.,b_tower,by=c('matchname', 'min'))
-<<<<<<< HEAD
-=======
+
 
 monster %>% filter(matchname =='0073b31255641f6c') %>% filter(min ==24)
->>>>>>> e7be0c891e5d69edbdbda7d52bd75b5c44f41c48
+
 
 merge[is.na(merge)] <- 0
 
@@ -189,11 +181,6 @@ merge<- left_join(str, yy, by=c('matchname', 'min')) %>%
   left_join(.,b_tower, by = c('matchname','min'))
 
 final <- left_join(gold, yy,by = c('matchname', 'min'))
-<<<<<<< HEAD
-=======
-
-
->>>>>>> e7be0c891e5d69edbdbda7d52bd75b5c44f41c48
 final <- na.omit(final)
 
 matchinfo <- read.csv("leagueoflegends/matchinfo.csv")
@@ -203,7 +190,7 @@ match$matchname <- gsub(".*=","",match$matchname)
 final <- left_join(final, match, by = "matchname")
 
 
-
+View()
 
 
 ##DRAFT
