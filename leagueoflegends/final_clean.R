@@ -51,13 +51,24 @@ rowSums(tower) %>% unique()
 b_tower <- na.omit(b_tower)
 
 ####change column name
-b_tower <- b_tower[c(-2:-4)]
-names(b_tower)[1]<-"matchname"
-names(b_tower)[2] <- 'min'
+tower <- b_tower[c(-2:-4)]
+names(tower)[1]<-"matchname"
+names(tower)[2] <- 'min'
 
 #####testing duplicate#####
-xxx <- b_tower %>% dplyr::count(matchname, min)
+tower_count <- tower %>% dplyr::count(matchname, min)
+tower_merge <- left_join(tower, tower_count,by = c("matchname","min"))
+tower_duplicate <- tower_merge %>% filter(n>1)
+tower_keep <- tower_merge %>% filter(n == 1)
 
+tower_agg = aggregate(tower_duplicate[c(-1,-2)], 
+                by = list(tower_duplicate$matchname,tower_duplicate$min),
+                FUN = sum)
+
+names(tower_agg)[1]<-"matchname"
+names(tower_agg)[2] <- 'min'
+
+clean_tower <- rbind(tower_keep, tower_agg)
 
 
 ########################################clean gold###########
@@ -90,7 +101,7 @@ match_id <- unique(monster$Address)
 monster <- monster %>% 
   filter(Team %in% c('bBarons','bDragons','bHeralds'))%>% 
   select(Address:Type) %>% 
-  mutate(Time_int = ceiling(Time)) %>% 
+  mutate(Time_int = ceiling(Time))%>% 
   mutate(Count = 1)
 
 monster <- spread(monster, key = Type, value = Count)%>% 
@@ -105,22 +116,33 @@ names(monster)[2] <- 'min'
 monster$matchname <- gsub(".*=","",monster$matchname)
 monster[is.na(monster)] <- 0
 
-dragon <- subset(monster, select =c(1,2,5))
-monster <- monster[-5]
+monster_count <- monster %>% dplyr::count(matchname, min)
+monster_merge <- left_join(monster, monster_count,by = c("matchname","min"))
+duplicate <- monster_merge %>% filter(n>1)
+keep <- monster_merge %>% filter(n == 1)
 
+agg = aggregate(duplicate[c(-1,-2)], 
+                by = list(duplicate$matchname,duplicate$min),
+                FUN = sum)
 
-###################### join kills.and monster & tower ##############
+names(agg)[1]<-"matchname"
+names(agg)[2] <- 'min'
 
+clean_monster <- rbind(keep, agg)
+
+###################### join kills.and monster & to 
 kills <- read.csv("leagueoflegends/kills.csv")
 kills$Time <- as.integer(kills$Time) + 1
 kills$Address <- gsub(".*=","",kills$Address)
 killing <- kills %>%
   filter(Team == 'bKills') %>% 
   select("Address","Team","Time") 
-killing <- killing %>% dplyr::count(Address, Time)
+clean_killing <- killing %>% dplyr::count(Address, Time)
 
-names(killing)[1] <- "matchname"
-names(killing)[2] <- 'min'
+names(clean_killing)[1] <- "matchname"
+names(clean_killing)[2] <- 'min'
+names(clean_killing)[3] <- 'killer'
+
 
 #####build a right structure. 
 str <- data.frame(matchname = match_id)
@@ -135,14 +157,10 @@ str$matchname <- gsub(".*=","",str$matchname)
 
 
 ### merge with right struture first to handle NA.
-merge<- left_join(str, monster, by=c('matchname', 'min'))
-  left_join(., killing, by=c('matchname', 'min')) %>% 
-  left_join(.,b_tower,by=c('matchname', 'min'))
-
-monster %>% filter(matchname =='0073b31255641f6c') %>% filter(min ==24)
-
+merge<- left_join(str, clean_monster, by=c('matchname', 'min')) %>% 
+  left_join(., clean_killing, by=c('matchname', 'min')) %>% 
+  left_join(.,clean_tower,by=c('matchname', 'min'))
 merge[is.na(merge)] <- 0
-
 
 ##accumulate number
 yy <- merge %>% group_by(matchname) %>% 
@@ -158,7 +176,7 @@ yy <- merge %>% group_by(matchname) %>%
                 bot_inner_cum = cumsum(bot_inner),
                 bot_base_cum = cumsum(bot_base),
                 nexus_turret_cum = cumsum(nexus_turret),
-                killers_cum = cumsum(killers),
+                killer_cum = cumsum(killer),
                 air_dragon_cum = cumsum(AIR_DRAGON),
                 earth_dragon_cum = cumsum(EARTH_DRAGON),
                 fire_dragon_cum = cumsum(FIRE_DRAGON),
@@ -168,25 +186,25 @@ yy <- merge %>% group_by(matchname) %>%
                 elder_dragon_cum = cumsum(ELDER_DRAGON),
                 rift_herald_cum = cumsum(RIFT_HERALD))
 
-yy <- yy[-(3:22)]
+yy <- yy[-(3:24)]
+
+final_x <- left_join(gold, yy, by = c('matchname', 'min'))
+final_x <- na.omit(final_x)
 
 
-merge<- left_join(str, yy, by=c('matchname', 'min')) %>%
-  left_join(., killing, by=c('matchname', 'min')) %>% 
-  left_join(.,b_tower, by = c('matchname','min'))
+### test number of observation or each min
+for (i in 1:60){
+  a = final_x %>% filter(min == i)
+  row = nrow(a)
+  print(c(i,row))
+}
 
-final <- left_join(gold, yy,by = c('matchname', 'min'))
-
-
-final <- na.omit(final)
-
+####insert output to table
 matchinfo <- read.csv("leagueoflegends/matchinfo.csv")
-View(matchinfo)
 match <- matchinfo[c("bResult", "Address")]
 names(match)[2] <- "matchname"
 match$matchname <- gsub(".*=","",match$matchname)
-View(match)
-final <- left_join(final, match, by = "matchname")
+final <- left_join(final_x, match, by = "matchname")
 
 
 
