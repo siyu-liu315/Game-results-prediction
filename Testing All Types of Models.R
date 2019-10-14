@@ -107,6 +107,7 @@ ggplot(log_fw, aes(seq_along(xname), mse_test)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
+
 ## Let Us Create The Same Train And Test
 
 final_15$train <- sample(c(0, 1), nrow(final_15), replace = TRUE, prob = c(.3, .7))
@@ -122,6 +123,9 @@ x_train <- as.matrix(x_train)
 y_train <- as.matrix(y_train)
 x_test <- as.matrix(x_test)
 y_test <- as.matrix(y_test)
+
+
+
 
 ## We Can Use Ridge Regression
 
@@ -144,6 +148,8 @@ Ridge_lambda_min_mse_test <- Ridge_mse_test[which.min(Ridge_mse_test)] %>% print
 coef(Ridge)
 
 
+
+
 ## We Can Try It With LASSO 
 Lasso <- cv.glmnet(x_train, y_train, alpha = 1, nfolds = 10)
 
@@ -163,6 +169,9 @@ Lasso_lambda_min_mse_test <- Lasso_mse_test[which.min(Lasso_mse_test)] %>% print
 
 coef(Lasso)
 
+
+
+
 ## Creating The Test And Train For The Trees
 
 train_tree <- train %>% select(-train, -X15.matchname, -X15.min)
@@ -174,7 +183,6 @@ f1 <- as.formula(X15.bResult ~ .)
 
 tree_final_15 <- rpart(f1,
                   train_tree,
-                  control = rpart.control(cp = 0.001),
                   method = "class")
 
 ## Create The Predictions And The MSE For Our Tree 
@@ -192,6 +200,44 @@ mse.test.tree
 
 rpart.plot(tree_final_15)
 
+
+
+
+## Lets Take A Look At Random Forest
+
+rf_train <- randomForest(f1,
+                         train,
+                         ntree=100,
+                         do.trace=T)
+varImpPlot(rf_train)
+
+rf_y_train_hat <- predict(rf_train, x_train)
+
+rf_mse_train <- mean((rf_y_train_hat - y_train) ^ 2)
+
+### MSE for Train Data
+print(rf_mse_train)
+
+## Random Forest for Test
+rf_test <- randomForest(f1,
+                        test,
+                        ntree=100,
+                        do.trace= T)
+rf_y_test_hat <- predict(rf_test, x_test)
+
+rf_mse_test <- mean((rf_y_test_hat - y_test) ^ 2)
+### MSE for Train Data
+print(rf_mse_test)
+
+### Tree but useless 
+fit.tree <- rpart(f1,
+                  train,
+                  control = rpart.control(cp = 0.1))
+par(xpd = TRUE)
+plot(fit.tree, compress=TRUE)
+text(fit.tree, use.n=TRUE)
+
+rpart.plot(fit.tree)
 
 
 
