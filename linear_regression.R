@@ -20,7 +20,7 @@ unique(final_15$X15.min)
 set.seed(123456)
 
 ## 80% of the sample size
-smp_size <- floor(0.80 * nrow(final_15))
+smp_size <- floor(0.70 * nrow(final_15))
 
 train_ind <- sample(seq_len(nrow(final_15)), size = smp_size)
 
