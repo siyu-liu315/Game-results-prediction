@@ -163,6 +163,36 @@ Lasso_lambda_min_mse_test <- Lasso_mse_test[which.min(Lasso_mse_test)] %>% print
 
 coef(Lasso)
 
+## Creating The Test And Train For The Trees
+
+train_tree <- train %>% select(-train, -X15.matchname, -X15.min)
+test_tree <- test %>% select(-train, -X15.matchname, -X15.min)
+
+## Create A Tree
+
+f1 <- as.formula(X15.bResult ~ .)
+
+tree_final_15 <- rpart(f1,
+                  train_tree,
+                  control = rpart.control(cp = 0.001),
+                  method = "class")
+
+## Create The Predictions And The MSE For Our Tree 
+
+yhat.train.tree <- predict(tree_final_15, train_tree)
+mse.train.tree <- mean((train_tree$X15.bResult - yhat.train.tree)^2)
+
+yhat.test.tree <- predict(tree_final_15, test_tree)
+mse.test.tree <- mean((test_tree$X15.bResult - yhat.train.tree)^2)
+
+mse.train.tree
+mse.test.tree
+
+## Plot The Tree
+
+rpart.plot(tree_final_15)
+
+
 
 
 
