@@ -261,5 +261,3 @@ rf_error_rate_train
 rf_error_rate_test
 
 
-
-
