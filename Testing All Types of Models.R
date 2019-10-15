@@ -7,8 +7,9 @@ library(rpart.plot)
 library(randomForest)
 library(gbm)
 library(glmnet)
-## set a standard seed number for reproducible results
 
+
+## set a standard seed number for reproducible results
 set.seed(123456)
 
 ## First We Try Linear And Forward Selection
@@ -132,6 +133,8 @@ ggplot(log_fw, aes(seq_along(xname), mse_test)) +
 
 
 
+
+
 ## We Can Create the Backward Selection In an easier Manner with The step function
 
 backwards_linear_15 <- linear_all_predictors
@@ -147,6 +150,7 @@ mse_test_15_backwards <- mean((linear_test_15$X15.bResult - yhat_test_15_linear)
 ##Lets Look At MSE
 mse_train_15_backwards
 mse_test_15_backwards
+
 
 
 
@@ -169,7 +173,7 @@ y_test <- as.matrix(y_test)
 
 
 
-
+##Penalized Linear Regression
 ## We Can Use Ridge Regression
 
 Ridge <- cv.glmnet(x_train, y_train, alpha = 0, nfolds = 10)
@@ -214,22 +218,36 @@ coef(Lasso)
 
 
 
-
-## Creating The Test And Train For The Trees
+## Creating The Test And Train For The Other Models
 
 train_tree <- train %>% select(-train, -X15.matchname, -X15.min)
 test_tree <- test %>% select(-train, -X15.matchname, -X15.min)
 
-## Unline Regression Models Trees and Forests Can Do Classification
+
+## Unline Linear Regression Models Logs, Trees, and Forests Can Do Classification
 
 train_tree$X15.bResult <- as.factor(train_tree$X15.bResult)
 test_tree$X15.bResult <- as.factor(test_tree$X15.bResult)
 
+f1 <- as.formula(X15.bResult ~ .)
+
+
+## Logistic Regression
+log_final_15 <- glm(f1, family = "binomial", data = train_tree)
+
+coef(log_final_15)
+
+## Make Our Predictions
+yhat_train_15_log <- predict(log_final_15, train_tree)
+yhat_test_15_log <- predict(log_final_15, test_tree)
+
+View(yhat_train_15_log)
+
+
+
 
 
 ## Create A Tree
-
-f1 <- as.formula(X15.bResult ~ .)
 
 tree_final_15 <- rpart(f1,
                   train_tree, 
