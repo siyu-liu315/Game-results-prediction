@@ -35,6 +35,8 @@ library(glmnet)
 ```
 
 
+
+
 ### We Needed To Set A Seed For This Project For Reproducible Results
 
 ```{r}
@@ -42,11 +44,11 @@ set.seed(123456)
 ```
 
 
+#  Creating The Final Dataset & List
+We created the final dataset which is the final aggregation of all of our data into one place. We created a list which consisted of 60 parts each part had its own minute in it. Therefore, the first dataset were all minute 1 variables and games and the last was all minute 60 variables and games, and so on for each minute.
 
-### we save clean data in the csv for quick loading. 
-### we split whole dataset into 60 ones based on minutes and included all in  one list 
 ```{r}
-read.csv('final.csv')
+final <- read.csv('final.csv')
 final_list <- split(final, final$min)
 ```
 
@@ -215,6 +217,20 @@ mse_test_15_backwards
 ```
 
 
+```{r}
+x_train <- linear_train_15 %>% select(-X15.bResult)
+y_train <- linear_train_15 %>% select(X15.bResult)
+x_test <- linear_test_15 %>% select(-X15.bResult)
+y_test <- linear_test_15 %>% select(X15.bResult)
+
+
+x_train <- as.matrix(x_train)
+y_train <- as.matrix(y_train)
+x_test <- as.matrix(x_test)
+y_test <- as.matrix(y_test)
+```
+
+
 # Penalized Regression For Our Problem
 We know of two ways to do penalized linear regression, Ridge and Lasso. 
 
@@ -269,10 +285,104 @@ We can see above the Coefficients of our Lasso regression. Following it is our t
 
 
 # The Truth About Linear Models For Our Problem
-Our problem is inherinetly a classification one. We want to predict Win or Loss. Linear Models requires a numeric end result, we adjusted our result to, 0 for Loss and 1 for Win, but it is not being utilized correctly. These are very 
+Our problem is inherinetly a classification one. We want to predict Win or Loss. Linear Models requires a numeric end result, we adjusted our result to, 0 for Loss and 1 for Win, but the algorithms are not being utilized correctly. These models can give us a result but its not exactly correct. We can look at these predictions, very roughly and with a grain of salt, as probability that the Blue team will win. Therefore, a .7 prediction would mean a 70% chance probability of a win. Though we did utilize it to show some interesting features realistically, we will be utilized a decision tree model. 
+
+# Decision Tree Based Models
+We can utilize a basic Tree, a Random Forest, and Boosting to get predictions. 
+
+#### We need to put our data into a new format
+Below we are preparing out data for the tree based models. We needed to convert our results into a factor to do a classification model. We are also going to prepare our formula for the trees, which includes are predictors from our base dataset. 
+
+```{r}
+train_tree <- train %>% select(-train, -X15.matchname, -X15.min)
+test_tree <- test %>% select(-train, -X15.matchname, -X15.min)
+
+train_tree$X15.bResult <- as.factor(train_tree$X15.bResult)
+test_tree$X15.bResult <- as.factor(test_tree$X15.bResult)
+
+f1 <- as.formula(X15.bResult ~ .)
+```
 
 
+#### A Basic Decision Tree
 
+```{r}
+tree_final_15 <- rpart(f1,
+                  train_tree, 
+                  method = "class")
+
+yhat.train.tree <- predict(tree_final_15, train_tree)
+yhat.test.tree <- predict(tree_final_15, test_tree)
+
+
+colnames(yhat.train.tree) <- c("loss","win")
+colnames(yhat.test.tree) <- c("loss","win")
+
+
+yhat.train.tree <- as.data.frame(yhat.train.tree)
+yhat.train.tree <- yhat.train.tree %>% mutate(actual = (yhat.train.tree$win > yhat.train.tree$loss))
+
+
+yhat.test.tree <- as.data.frame(yhat.test.tree)
+yhat.test.tree <- yhat.test.tree %>% mutate(one_is_bigger = (yhat.test.tree$win > yhat.test.tree$loss))
+
+
+tree_error_rate_train <- 1 - ((length(yhat.train.tree[yhat.train.tree == TRUE])) / nrow(yhat.train.tree))
+tree_error_rate_test <- 1 - ((length(yhat.test.tree[yhat.test.tree == TRUE])) / nrow(yhat.test.tree))
+
+
+tree_error_rate_train
+tree_error_rate_test
+```
+
+
+The above results show the error in their predictions for the Train and Test data respectively for our Basic Tree. You can not compare this to MSE. 
+
+#### A Graph Of Our Tree
+
+```{r}
+rpart.plot(tree_final_15)
+```
+
+
+#### Random Forest 
+
+```{r}
+rf_final_15 <- randomForest(f1,
+                         train_tree,
+                         ntree=250,
+                         do.trace=F)
+
+
+rf_y_train_hat <- predict(rf_final_15, train_tree)
+rf_y_test_hat <- predict(rf_final_15, test_tree)
+
+rf_error_dataset_train <- cbind.data.frame(rf_y_train_hat, train_tree$X15.bResult)
+rf_error_dataset_train <- rf_error_dataset_train %>%  
+                              mutate(correct_prediction = 
+                                       rf_error_dataset_train$rf_y_train_hat == rf_error_dataset_train$`train_tree$X15.bResult`)
+
+rf_error_dataset_test <- cbind.data.frame(rf_y_test_hat, test_tree$X15.bResult)
+rf_error_dataset_test <- rf_error_dataset_test %>%  
+                             mutate(correct_prediction = 
+                                       rf_error_dataset_test$rf_y_test_hat == rf_error_dataset_test$`test_tree$X15.bResult`)
+
+
+rf_error_rate_train <- 1 - (length(rf_error_dataset_train[rf_error_dataset_train == TRUE]) / length(rf_error_dataset_train$correct_prediction))
+rf_error_rate_test <- 1 - (length(rf_error_dataset_test[rf_error_dataset_test == TRUE]) / length(rf_error_dataset_test$correct_prediction))
+
+rf_error_rate_train
+rf_error_rate_test
+```
+
+
+Above output are the error prediction rates for the Train and Test for our Random Forest model. They can be compared to our Tree's error prediction rate but not to MSE again. We can see that our Random Forest predicts much better than our Basic Tree. 
+
+#### A Graph Of Our Nodes
+
+```{r}
+varImpPlot(rf_final_15)
+```
 
 
 
