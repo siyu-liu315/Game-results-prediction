@@ -25,19 +25,20 @@ final <- read.csv('final.csv')
 
 ### train_set spli
 
+
 for (i in 1:60){
   
   df <- final %>% filter(min == i)
   
   df$train <- sample(c(0, 1), nrow(df), replace = TRUE, prob = c(.3, .7))
   
-  test <- df%>% filter(train == 0)
-  train <-df%>% filter(train == 1)
+  test <- df %>% filter(train == 0)
+  train <-df %>% filter(train == 1)
   
-  x_train <- train %>% select(-bResult, -train, -matchname)
+  x_train <- train %>% select(-bResult, -train, -matchname, -min)
   y_train <- train %>% select(bResult)
   
-  x_test <- test %>% select(-bResult, -train, -matchname)
+  x_test <- test %>% select(-bResult, -train, -matchname, -min)
   y_test <- test %>% select(bResult)
   
   rf_train <- randomForest(f1,
@@ -45,26 +46,45 @@ for (i in 1:60){
                           ntree=5,
                           do.trace= T)
   
-  rf_y_test_hat <- predict(rf_train, x_test)
   rf_y_train_hat <- predict(rf_train, x_train)
+  rf_y_test_hat <- predict(rf_train, x_test)
   
-  rf_error_dataset_test <- cbind.data.frame(i, rf_y_test_hat, y_test)
+  rf_y_train_hat <- as.data.frame(rf_y_train_hat)
+  rf_y_test_hat <- as.data.frame(rf_y_test_hat)
+  
+  colnames(y_test) <- ("result")
+  colnames(rf_y_test_hat) <- ("prediction")
+  
+  rf_error_dataset_test <- cbind.data.frame(rf_y_test_hat, y_test)
+  rf_error_dataset_test <- rf_error_dataset_test %>%  
+                               mutate(correct_prediction = 
+                                        rf_y_test_hat$prediction == y_test$result)
+  
+  rf_error_rate_train <- 1 - (length(rf_error_dataset_train[rf_error_dataset_train == TRUE]) / length(rf_error_dataset_train$correct_prediction))
+  
+  rf_error_rate_test <- 1 - (length(rf_error_dataset_test[rf_error_dataset_test == TRUE]) / length(rf_error_dataset_test$correct_prediction))
+  
+  
+  log_final_rf <- log_final_rf <- add_row(
+                    minute = i,
+                    model = rf_train,
+                    error_train = rf_error_rate_train,
+                    error_test = rf_error_rate_test
+  )
+  
 } 
   
   
   
-  
-  
-  rf_error_dataset_test <- rf_error_dataset_test %>%  
-    mutate(correct_prediction = 
-             rf_error_dataset_test$rf_y_test_hat == rf_error_dataset_test$`test_tree$X15.bResult`)
-  
-  
-  rf_error_rate_train <- 1 - (length(rf_error_dataset_train[rf_error_dataset_train == TRUE]) / length(rf_error_dataset_train$correct_prediction))
-  rf_error_rate_test <- 1 - (length(rf_error_dataset_test[rf_error_dataset_test == TRUE]) / length(rf_error_dataset_test$correct_prediction))
-  
-  
    
+log_fw <-
+  log_fw %>% add_row(
+    xname = best_xname_15_linear,
+    model = paste0(deparse(best_fit_fw_15_linear$call), collapse = ""),
+    mse_train = best_mse_train_15_linear,
+    mse_test = best_mse_test_15_linear
+  )
+
   
   ### MSE for Train Data
   mse_tibble <-  add_row(mse_tibble,min = i,mse_train = rf_mse_train, mse_test = rf_mse_test)
