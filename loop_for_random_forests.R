@@ -26,7 +26,8 @@ final <- read.csv('final.csv')
 ### train_set spli
 
 
-for (i in 1:60){
+
+for (i in 1:60) {
   
   df <- final %>% filter(min == i)
   
@@ -65,17 +66,8 @@ for (i in 1:60){
   rf_error_rate_test <- 1 - (length(rf_error_dataset_test[rf_error_dataset_test == TRUE]) / length(rf_error_dataset_test$correct_prediction))
   
   
-  log_final_rf <- log_final_rf <- add_row(
-                    minute = i,
-                    model = rf_train,
-                    error_train = rf_error_rate_train,
-                    error_test = rf_error_rate_test
-  )
-  
 } 
-  
-  
-  
+
    
 log_fw <-
   log_fw %>% add_row(
@@ -86,8 +78,6 @@ log_fw <-
   )
 
   
-  ### MSE for Train Data
-  mse_tibble <-  add_row(mse_tibble,min = i,mse_train = rf_mse_train, mse_test = rf_mse_test)
-  }
+ 
 
 
