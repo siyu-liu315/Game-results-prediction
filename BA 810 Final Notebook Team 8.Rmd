@@ -207,3 +207,65 @@ mse_train_15_backwards
 mse_test_15_backwards
 ```
 
+
+# Penalized Regression For Our Problem
+We know of two ways to do penalized linear regression, Ridge and Lasso. 
+
+#### Ridge Regression 
+```{r}
+Ridge <- cv.glmnet(x_train, y_train, alpha = 0, nfolds = 10)
+
+Ridge_y_train_hat <- predict(Ridge, x_train, s = Ridge$lambda.min)
+Ridge_y_test_hat <- predict(Ridge, x_test, s = Ridge$lambda.min)
+
+y_train <- as.numeric(y_train)
+y_test <- as.numeric(y_test)
+
+Ridge_RSS_train <- (y_train - Ridge_y_train_hat)^2
+Ridge_RSS_test <- (y_test - Ridge_y_test_hat)^2 
+Ridge_mse_train <- apply(Ridge_RSS_train, 2, mean)
+Ridge_mse_test <- apply(Ridge_RSS_test, 2, mean)
+
+coef(Ridge)
+
+Ridge_lambda_min_mse_train <- Ridge_mse_train[which.min(Ridge_mse_train)] %>% print()
+Ridge_lambda_min_mse_test <- Ridge_mse_test[which.min(Ridge_mse_test)] %>% print()
+```
+
+
+We can see above the Coefficients of our Ridge regression. Following it is our two MSE's for this penalized Ridge Regression. They are Train MSE and Test MSE. 
+
+#### Lasso Regression 
+
+```{r}
+Lasso <- cv.glmnet(x_train, y_train, alpha = 1, nfolds = 10)
+
+Lasso_y_train_hat <- predict(Lasso, x_train, s = Lasso$lambda.min)
+Lasso_y_test_hat <- predict(Lasso, x_test, s = Lasso$lambda.min)
+
+y_train <- as.numeric(y_train)
+y_test <- as.numeric(y_test)
+
+Lasso_RSS_train <- (y_train - Lasso_y_train_hat)^2
+Lasso_RSS_test <- (y_test - Lasso_y_test_hat)^2 
+Lasso_mse_train <- apply(Lasso_RSS_train, 2, mean)
+Lasso_mse_test <- apply(Lasso_RSS_test, 2, mean)
+
+coef(Lasso)
+
+Lasso_lambda_min_mse_train <- Lasso_mse_train[which.min(Lasso_mse_train)] %>% print()
+Lasso_lambda_min_mse_test <- Lasso_mse_test[which.min(Lasso_mse_test)] %>% print()
+```
+
+
+We can see above the Coefficients of our Lasso regression. Following it is our two MSE's for this penalized Ridge Regression. They are Train MSE and Test MSE. 
+
+
+# The Truth About Linear Models For Our Problem
+Our problem is inherinetly a classification one. We want to predict Win or Loss. Linear Models requires a numeric end result, we adjusted our result to, 0 for Loss and 1 for Win, but it is not being utilized correctly. These are very 
+
+
+
+
+
+
