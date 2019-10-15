@@ -35,8 +35,6 @@ library(glmnet)
 ```
 
 
-
-
 ### We Needed To Set A Seed For This Project For Reproducible Results
 
 ```{r}
@@ -45,7 +43,7 @@ set.seed(123456)
 
 
 #  Creating The Final Dataset & List
-We created the final dataset which is the final aggregation of all of our data into one place. We created a list which consisted of 60 parts each part had its own minute in it. Therefore, the first dataset were all minute 1 variables and games and the last was all minute 60 variables and games, and so on for each minute.
+We created the final dataset which is the final aggregation of all of our data into one place. We created a list which consisted of 60 parts each part had its own minute in it. Therefore, the first dataset were all minute 1 variables and games and the last were all minute 60 variables and games, and so on for each minute.
 
 ```{r}
 final <- read.csv('final.csv')
@@ -106,7 +104,7 @@ all_predictors_test_mse <- mse_test_15_linear
 all_predictors_train_mse
 all_predictors_test_mse
 ```
- The ouput printed is the Train MSE and the Test MSE, respectively. This is our MSE's when all of the predictors were utilized to figure out our predictions. 
+ The output printed is the Train MSE and the Test MSE, respectively. This is our MSE's when all of the predictors were utilized to figure out our predictions. 
  
  
 # Lets Do Some Step-Wise Regression 
@@ -195,8 +193,6 @@ ggplot(log_fw, aes(seq_along(xname), mse_test)) +
 #### Backward Selection
 This process was much easier but does not show or store as much information as above. The end result shows the MSE for Train and Test, respectively.
 
-
-
 ```{r}
 backwards_linear_15 <- linear_all_predictors
 
@@ -209,8 +205,7 @@ yhat_test_15_backwards <- predict(backwards_linear_15, linear_test_15)
 mse_test_15_backwards <- mean((linear_test_15$X15.bResult - yhat_test_15_linear) ^ 2)
 ```
 
-
-Here are the results of the computed MSE's for Train and Test, respectively. 
+Here are the results of the computed MSEs for Train and Test, respectively. 
 
 ```{r}
 mse_train_15_backwards
@@ -286,7 +281,7 @@ We can see above the Coefficients of our Lasso regression. Following it is our t
 
 
 # The Truth About Linear Models For Our Problem
-Our problem is inherinetly a classification one. We want to predict Win or Loss. Linear Models requires a numeric end result, we adjusted our result to, 0 for Loss and 1 for Win, but the algorithms are not being utilized correctly. These models can give us a result but its not exactly correct. We can look at these predictions, very roughly and with a grain of salt, as probability that the Blue team will win. Therefore, a .7 prediction would mean a 70% chance probability of a win. Though we did utilize it to show some interesting features realistically, we will be utilized a decision tree model. 
+Our problem is inherently a classification one. We want to predict Win or Loss. Linear Models requires a numeric end result, we adjusted our result to, 0 for Loss and 1 for Win, but the algorithms are not being utilized correctly. These models can give us a result but its not exactly correct. We can look at these predictions, very roughly and with a grain of salt, as probability that the Blue team will win. Therefore, a .7 prediction would mean a 70% chance probability of a win. Though we did utilize it to show some interesting features realistically, we will be utilized a decision tree model. 
 
 # Decision Tree Based Models
 We can utilize a basic Tree, a Random Forest, and Boosting to get predictions. 
@@ -297,6 +292,9 @@ Below we are preparing out data for the tree based models. We needed to convert 
 ```{r}
 train_tree <- linear_train_15
 test_tree <- linear_test_15
+
+train_tree <- train_tree %>% select(-X15.X)
+test_tree <- test_tree %>% select(-X15.X)
 
 train_tree$X15.bResult <- as.factor(train_tree$X15.bResult)
 test_tree$X15.bResult <- as.factor(test_tree$X15.bResult)
@@ -337,7 +335,7 @@ tree_error_rate_test
 ```
 
 
-The above results show the error in their predictions for the Train and Test data respectively for our Basic Tree. You can not compare this to MSE. 
+The above results show the error in their predictions for the Train and Test data respectively for our Basic Tree. You cannot compare this to MSE. 
 
 #### A Graph Of Our Tree
 
@@ -386,4 +384,35 @@ varImpPlot(rf_final_15)
 ```
 
 
+#### Boosting
+We needed to remove some rows that did not have variance in the predictors for this minute. We utilized a boosting model. This model only allows us to predict numerically and we can again calculate an MSE. Much like earlier we cannot compare MSEs to error rate for the other trees.
+
+```{r}
+train_tree <- train_tree %>% select(-X15.baron_accum, -X15.elder_dragon_accum,-X15.nexus_turret_accum)
+test_tree <- test_tree %>% select(-X15.baron_accum,-X15.elder_dragon_accum,-X15.nexus_turret_accum)
+
+boost_final_15 <- gbm(f1,
+                      data = train_tree,
+                      distribution = "gaussian",
+                      n.trees = 250,
+                      interaction.depth = 2,
+                      shrinkage = 0.001)
+
+
+relative.influence(train_boost_final_15)
+
+train_boost_yhat_btree <- predict(boost_final_15, train_tree, n.trees = 250)
+train_boost_mse_btree <- mean((train_boost_yhat_btree - y_train) ^ 2)
+
+test_boost_yhat_btree <- predict(boost_final_15, test_tree, n.trees = 250)
+test_boost_mse_btree <- mean((test_boost_yhat_btree - y_test) ^ 2)
+
+View(train_boost_yhat_btree)
+
+train_boost_mse_btree
+test_boost_mse_btree
+```
+
+# What Model To Use For Our Other Minutes
+We believe that because our problem is a classification problem that we need to use the models that are best for this in our case it is between a Basic Decision Tree and A Random Forest. The Random Forest's Error rate on the text prediction is `r rf_error_rate_test` which is much lower than the error rate for our Basic tree, `r tree_error_rate_test`. We will proceeed by choosing the Random Forest model to solve our problem and use to create the models for each minute. 
 
