@@ -193,7 +193,7 @@ ggplot(log_fw, aes(seq_along(xname), mse_test)) +
 #### Backward Selection
 This process was much easier but does not show or store as much information as above. The end result shows the MSE for Train and Test, respectively.
 
-```{r}
+```{r echo=T, results='hide'}
 backwards_linear_15 <- linear_all_predictors
 
 backwards_linear_15 <- step(backwards_linear_15, direction = "backward")
@@ -388,9 +388,6 @@ varImpPlot(rf_final_15)
 We needed to remove some rows that did not have variance in the predictors for this minute. We utilized a boosting model. This model only allows us to predict numerically and we can again calculate an MSE. Much like earlier we cannot compare MSEs to error rate for the other trees.
 
 ```{r}
-train_tree <- train_tree %>% select(-X15.baron_accum, -X15.elder_dragon_accum,-X15.nexus_turret_accum)
-test_tree <- test_tree %>% select(-X15.baron_accum,-X15.elder_dragon_accum,-X15.nexus_turret_accum)
-
 boost_final_15 <- gbm(f1,
                       data = train_tree,
                       distribution = "gaussian",
@@ -399,7 +396,7 @@ boost_final_15 <- gbm(f1,
                       shrinkage = 0.001)
 
 
-relative.influence(train_boost_final_15)
+relative.influence(boost_final_15)
 
 train_boost_yhat_btree <- predict(boost_final_15, train_tree, n.trees = 250)
 train_boost_mse_btree <- mean((train_boost_yhat_btree - y_train) ^ 2)
@@ -413,6 +410,15 @@ train_boost_mse_btree
 test_boost_mse_btree
 ```
 
+
+We can see the influence of each predictor for our model in the above graphic. After which are the two MSEs for Train and Test respectively for our boosting model. 
+
+
 # What Model To Use For Our Other Minutes
-We believe that because our problem is a classification problem that we need to use the models that are best for this in our case it is between a Basic Decision Tree and A Random Forest. The Random Forest's Error rate on the text prediction is `r rf_error_rate_test` which is much lower than the error rate for our Basic tree, `r tree_error_rate_test`. We will proceeed by choosing the Random Forest model to solve our problem and use to create the models for each minute. 
+We believe that because our problem is a classification problem that we need to use the models that are best for this in our case it is between a Basic Decision Tree and A Random Forest. The Random Forest's Error rate on the text prediction is `r rf_error_rate_test` which is much lower than the error rate for our Basic tree, `r tree_error_rate_test`. We will proceeed by choosing the Random Forest model to solve our problem and use this algorithm to create the models for each minute. 
+
+
+# Creating A Loop To Model Each minute From 1 to 60
+We have 60 Datasets inside a list. Each dataset is a unique minute. Inside the dataset is mostly cumulative information of the game. We are going to run a loop that will pull out and model each dataset in the list. This will give us a Random Forest model for each minute and we can make updated predictions throughout a game. 
+
 
