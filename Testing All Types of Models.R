@@ -7,6 +7,9 @@ library(rpart.plot)
 library(randomForest)
 library(gbm)
 library(glmnet)
+## set a standard seed number for reproducible results
+
+set.seed(123456)
 
 ## First We Try Linear And Forward Selection
 
@@ -15,10 +18,6 @@ final_15 <- as.data.frame(final_list[15])
 
 ## make sure only the minute 15 is in the dataframe
 unique(final_15$X15.min)
-
-## set a standard seed number for reproducible results
-
-set.seed(123456)
 
 ## 70% of the sample size is our Train
 smp_size <- floor(0.70 * nrow(final_15))
@@ -32,6 +31,29 @@ linear_test_15 <- final_15[-train_ind, ]
 xnames <- colnames(final_15)
 xnames <- xnames[!xnames %in% c("X15.min", "X15.matchname", "X15.bResult")]
 
+
+
+
+## We Can Create A Single Linear Model With All of The Predictors
+linear_train_15 <- linear_train_15 %>% select(-X15.matchname, -X15.min)
+
+linear_all_predictors <- lm(X15.bResult ~ ., data = linear_train_15)
+
+yhat_train_15_linear <- predict(linear_all_predictors, linear_train_15)
+mse_train_15_linear <- mean((linear_train_15$X15.bResult - yhat_train_15_linear) ^ 2)
+yhat_test_15_linear <- predict(linear_all_predictors, linear_train_15)
+mse_test_15_linear <- mean((linear_test_15$X15.bResult - yhat_test_15_linear) ^ 2)
+
+all_predictors_train_mse <- mse_train_15_linear
+all_predictors_test_mse <- mse_test_15_linear
+
+all_predictors_train_mse
+all_predictors_test_mse
+
+
+
+
+## Forward Selection Start
 ## fit the intercept to start the model
 
 fit_linear_15 <- lm(X15.bResult ~ 1, data = linear_train_15)
@@ -108,6 +130,7 @@ ggplot(log_fw, aes(seq_along(xname), mse_test)) +
 
 
 
+
 ## Let Us Create The Same Train And Test
 
 final_15$train <- sample(c(0, 1), nrow(final_15), replace = TRUE, prob = c(.3, .7))
@@ -177,24 +200,26 @@ coef(Lasso)
 train_tree <- train %>% select(-train, -X15.matchname, -X15.min)
 test_tree <- test %>% select(-train, -X15.matchname, -X15.min)
 
+## Unline Regression Models Trees and Forests Can Do Classification
+
+train_tree$X15.bResult <- as.factor(train_tree$X15.bResult)
+test_tree$X15.bResult <- as.factor(test_tree$X15.bResult)
+
+
+
 ## Create A Tree
 
 f1 <- as.formula(X15.bResult ~ .)
 
 tree_final_15 <- rpart(f1,
-                  train_tree,
+                  train_tree, 
                   method = "class")
 
-## Create The Predictions And The MSE For Our Tree 
-
+## Create The Predictions For Our Tree 
 yhat.train.tree <- predict(tree_final_15, train_tree)
-mse.train.tree <- mean((train_tree$X15.bResult - yhat.train.tree)^2)
-
 yhat.test.tree <- predict(tree_final_15, test_tree)
-mse.test.tree <- mean((test_tree$X15.bResult - yhat.train.tree)^2)
 
-mse.train.tree
-mse.test.tree
+
 
 ## Plot The Tree
 
@@ -205,39 +230,35 @@ rpart.plot(tree_final_15)
 
 ## Lets Take A Look At Random Forest
 
-rf_train <- randomForest(f1,
+rf_final_15 <- randomForest(f1,
                          train_tree,
-                         ntree=100,
+                         ntree=5000,
                          do.trace=T)
-varImpPlot(rf_train)
 
-rf_y_train_hat <- predict(rf_train, x_train)
 
-rf_mse_train <- mean((rf_y_train_hat - y_train) ^ 2)
+varImpPlot(rf_final_15)
 
-### MSE for Train Data
-print(rf_mse_train)
+rf_y_train_hat <- predict(rf_final_15, train_tree)
+rf_y_test_hat <- predict(rf_final_15, test_tree)
 
-## Random Forest for Test
-rf_test <- randomForest(f1,
-                        test,
-                        ntree=100,
-                        do.trace= T)
-rf_y_test_hat <- predict(rf_test, x_test)
+rf_error_dataset_train <- cbind.data.frame(rf_y_train_hat, train_tree$X15.bResult)
+rf_error_dataset_train <- rf_error_dataset_train %>%  
+                              mutate(correct_prediction = 
+                                       rf_error_dataset_train$rf_y_train_hat == rf_error_dataset_train$`train_tree$X15.bResult`)
 
-rf_mse_test <- mean((rf_y_test_hat - y_test) ^ 2)
-### MSE for Train Data
-print(rf_mse_test)
+rf_error_dataset_test <- cbind.data.frame(rf_y_test_hat, test_tree$X15.bResult)
+rf_error_dataset_test <- rf_error_dataset_test %>%  
+                             mutate(correct_prediction = 
+                                       rf_error_dataset_test$rf_y_test_hat == rf_error_dataset_test$`test_tree$X15.bResult`)
 
-### Tree but useless 
-fit.tree <- rpart(f1,
-                  train,
-                  control = rpart.control(cp = 0.1))
-par(xpd = TRUE)
-plot(fit.tree, compress=TRUE)
-text(fit.tree, use.n=TRUE)
 
-rpart.plot(fit.tree)
+rf_error_rate_train <- 1 - (length(rf_error_dataset_train[rf_error_dataset_train == TRUE]) / length(rf_error_dataset_train$correct_prediction))
+rf_error_rate_test <- 1 - (length(rf_error_dataset_test[rf_error_dataset_test == TRUE]) / length(rf_error_dataset_test$correct_prediction))
+
+
+## This Is the Percentage of Incorrect Answers of Predictions
+rf_error_rate_train
+rf_error_rate_test
 
 
 
