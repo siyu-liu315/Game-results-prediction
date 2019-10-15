@@ -23,11 +23,11 @@ f1 <- as.formula(bResult ~ golddiffADC + golddiffJungle + golddiffMiddle
 ##
 final <- read.csv('final.csv')
 
-rf_error_dataset_test <- tibble(min = '', y_test_hat ="", y_test = "")
+lst <- list()
 
 ### train_set spli
 
-for (i in 1:60){
+for (i in 1:10){
   
   df <- final %>% filter(min == i)
   
@@ -50,7 +50,12 @@ for (i in 1:60){
   rf_y_test_hat <- predict(rf_train, x_test)
   rf_y_train_hat <- predict(rf_train, x_train)
   
-  rf_error_dataset_test <- add_row(rf_error_dataset_test, min = i, y_test_hat = rf_y_test_hat, y_test = y_test)
+  
+  lst[[i]] <- cbind.data.frame(rf_y_test_hat, y_test) %>% 
+    mutate(correct_prediction = 
+           rf_y_test_hat == y_test) %>% 
+    mutate(error_rate = 1 - (length(correct_prediction[correct_prediction == TRUE])) / length(correct_prediction))
+    
 } 
   
   
