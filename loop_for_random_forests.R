@@ -13,6 +13,8 @@ library(glmnet) # this is the library that allows us to run penalized regression
 theme_set(theme_bw())
 
 ##### Random Forest 
+final$bResult <- as.factor(final$bResult)
+
 f1 <- as.formula(bResult ~ golddiffADC + golddiffJungle + golddiffMiddle 
                  + golddiffSupport + golddiffTop + top_outer_accum + top_inner_accum
                  + top_base_accum + mid_outer_accum + mid_inner_accum + mid_base_accum
@@ -28,13 +30,17 @@ mse_tibble <-tibble(min = "",
                     mse_test = "")
 
 for (i in 1:60){
+  
   df <- final %>% filter(min == i)
+  
   df$train <- sample(c(0, 1), nrow(df), replace = TRUE, prob = c(.3, .7))
+  
   test <- df%>% filter(train == 0)
   train <-df%>% filter(train == 1)
   
   x_train <- train %>% select(-bResult, -train, -matchname)
   y_train <- train %>% select(bResult)
+  
   x_test <- test %>% select(-bResult, -train, -matchname)
   y_test <- test %>% select(bResult)
   
@@ -43,12 +49,24 @@ for (i in 1:60){
                            train,
                            ntree=5,
                            do.trace=T)
-  varImpPlot(rf_train)
-  rf_y_train_hat <- predict(rf_train, x_train)
-  rf_mse_train <- colMeans((rf_y_train_hat - y_train) ^ 2)
   
+  varImpPlot(rf_train)
+  
+  rf_y_train_hat <- predict(rf_train, x_train)
   rf_y_test_hat <- predict(rf_train, x_test)
-  rf_mse_test <- colMeans((rf_y_test_hat - y_test) ^ 2)
+  
+   
+  rf_error_dataset_test <- cbind.data.frame(rf_y_test_hat, test_tree$X15.bResult)
+  rf_error_dataset_test <- rf_error_dataset_test %>%  
+    mutate(correct_prediction = 
+             rf_error_dataset_test$rf_y_test_hat == rf_error_dataset_test$`test_tree$X15.bResult`)
+  
+  
+  rf_error_rate_train <- 1 - (length(rf_error_dataset_train[rf_error_dataset_train == TRUE]) / length(rf_error_dataset_train$correct_prediction))
+  rf_error_rate_test <- 1 - (length(rf_error_dataset_test[rf_error_dataset_test == TRUE]) / length(rf_error_dataset_test$correct_prediction))
+  
+  
+   
   
   ### MSE for Train Data
   mse_tibble <-  add_row(mse_tibble,min = i,mse_train = rf_mse_train, mse_test = rf_mse_test)
