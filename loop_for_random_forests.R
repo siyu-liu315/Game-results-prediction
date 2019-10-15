@@ -1,5 +1,3 @@
-
-
 library(ggplot2) 
 library(ggthemes) 
 library(glmnet)
@@ -13,7 +11,6 @@ library(glmnet) # this is the library that allows us to run penalized regression
 theme_set(theme_bw())
 
 ##### Random Forest 
-final$bResult <- as.factor(final$bResult)
 
 f1 <- as.formula(bResult ~ golddiffADC + golddiffJungle + golddiffMiddle 
                  + golddiffSupport + golddiffTop + top_outer_accum + top_inner_accum
@@ -23,11 +20,10 @@ f1 <- as.formula(bResult ~ golddiffADC + golddiffJungle + golddiffMiddle
                  + fire_dragon_accum + water_dragon_accum + dragon_accum + baron_accum
                  + elder_dragon_accum + rift_herald_accum)
 
-### train_set split
+##
+final <- read.csv('final.csv')
 
-mse_tibble <-tibble(min = "",
-                    mse_train = "",
-                    mse_test = "")
+### train_set spli
 
 for (i in 1:60){
   
@@ -44,19 +40,21 @@ for (i in 1:60){
   x_test <- test %>% select(-bResult, -train, -matchname)
   y_test <- test %>% select(bResult)
   
-  ### Train random forest 
   rf_train <- randomForest(f1,
-                           train,
-                           ntree=5,
-                           do.trace=T)
+                          train,
+                          ntree=5,
+                          do.trace= T)
   
-  varImpPlot(rf_train)
-  
-  rf_y_train_hat <- predict(rf_train, x_train)
   rf_y_test_hat <- predict(rf_train, x_test)
+  rf_y_train_hat <- predict(rf_train, x_train)
   
-   
-  rf_error_dataset_test <- cbind.data.frame(rf_y_test_hat, test_tree$X15.bResult)
+  rf_error_dataset_test <- cbind.data.frame(i, rf_y_test_hat, y_test)
+} 
+  
+  
+  
+  
+  
   rf_error_dataset_test <- rf_error_dataset_test %>%  
     mutate(correct_prediction = 
              rf_error_dataset_test$rf_y_test_hat == rf_error_dataset_test$`test_tree$X15.bResult`)
@@ -73,13 +71,3 @@ for (i in 1:60){
   }
 
 
-
-### Tree but useless 
-fit.tree <- rpart(f1,
-                  train,
-                  control = rpart.control(cp = 0.1))
-par(xpd = TRUE)
-plot(fit.tree, compress=TRUE)
-text(fit.tree, use.n=TRUE)
-
-rpart.plot(fit.tree)
