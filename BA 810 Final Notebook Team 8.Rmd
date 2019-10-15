@@ -42,11 +42,11 @@ set.seed(123456)
 ```
 
 
+#  Creating The Final Dataset & List
+We created the final dataset which is the final aggregation of all of our data into one place. We created a list which consisted of 60 parts each part had its own minute in it. Therefore, the first dataset were all minute 1 variables and games and the last were all minute 60 variables and games, and so on for each minute.
 
-### we save clean data in the csv for quick loading. 
-### we split whole dataset into 60 ones based on minutes and included all in  one list 
 ```{r}
-read.csv('final.csv')
+final <- read.csv('final.csv')
 final_list <- split(final, final$min)
 ```
 
@@ -88,6 +88,7 @@ xnames <- xnames[!xnames %in% c("X15.min", "X15.matchname", "X15.bResult")]
 
 ```{r warning=FALSE}
 linear_train_15 <- linear_train_15 %>% select(-X15.matchname, -X15.min)
+linear_test_15 <- linear_test_15 %>% select(-X15.matchname, -X15.min)
 
 linear_all_predictors <- lm(X15.bResult ~ ., data = linear_train_15)
 
@@ -103,7 +104,7 @@ all_predictors_test_mse <- mse_test_15_linear
 all_predictors_train_mse
 all_predictors_test_mse
 ```
- The ouput printed is the Train MSE and the Test MSE, respectively. This is our MSE's when all of the predictors were utilized to figure out our predictions. 
+ The output printed is the Train MSE and the Test MSE, respectively. This is our MSE's when all of the predictors were utilized to figure out our predictions. 
  
  
 # Lets Do Some Step-Wise Regression 
@@ -192,9 +193,7 @@ ggplot(log_fw, aes(seq_along(xname), mse_test)) +
 #### Backward Selection
 This process was much easier but does not show or store as much information as above. The end result shows the MSE for Train and Test, respectively.
 
-
-
-```{r}
+```{r echo=T, results='hide'}
 backwards_linear_15 <- linear_all_predictors
 
 backwards_linear_15 <- step(backwards_linear_15, direction = "backward")
@@ -206,11 +205,220 @@ yhat_test_15_backwards <- predict(backwards_linear_15, linear_test_15)
 mse_test_15_backwards <- mean((linear_test_15$X15.bResult - yhat_test_15_linear) ^ 2)
 ```
 
-
-Here are the results of the computed MSE's for Train and Test, respectively. 
+Here are the results of the computed MSEs for Train and Test, respectively. 
 
 ```{r}
 mse_train_15_backwards
 mse_test_15_backwards
 ```
+
+
+```{r}
+x_train <- linear_train_15 %>% select(-X15.bResult)
+y_train <- linear_train_15 %>% select(X15.bResult)
+x_test <- linear_test_15 %>% select(-X15.bResult)
+y_test <- linear_test_15 %>% select(X15.bResult)
+
+
+x_train <- as.matrix(x_train)
+y_train <- as.matrix(y_train)
+x_test <- as.matrix(x_test)
+y_test <- as.matrix(y_test)
+```
+
+
+# Penalized Regression For Our Problem
+We know of two ways to do penalized linear regression, Ridge and Lasso. 
+
+#### Ridge Regression 
+```{r}
+Ridge <- cv.glmnet(x_train, y_train, alpha = 0, nfolds = 10)
+
+Ridge_y_train_hat <- predict(Ridge, x_train, s = Ridge$lambda.min)
+Ridge_y_test_hat <- predict(Ridge, x_test, s = Ridge$lambda.min)
+
+y_train <- as.numeric(y_train)
+y_test <- as.numeric(y_test)
+
+Ridge_RSS_train <- (y_train - Ridge_y_train_hat)^2
+Ridge_RSS_test <- (y_test - Ridge_y_test_hat)^2 
+Ridge_mse_train <- apply(Ridge_RSS_train, 2, mean)
+Ridge_mse_test <- apply(Ridge_RSS_test, 2, mean)
+
+coef(Ridge)
+
+Ridge_lambda_min_mse_train <- Ridge_mse_train[which.min(Ridge_mse_train)] %>% print()
+Ridge_lambda_min_mse_test <- Ridge_mse_test[which.min(Ridge_mse_test)] %>% print()
+```
+
+
+We can see above the Coefficients of our Ridge regression. Following it is our two MSE's for this penalized Ridge Regression. They are Train MSE and Test MSE. 
+
+#### Lasso Regression 
+
+```{r}
+Lasso <- cv.glmnet(x_train, y_train, alpha = 1, nfolds = 10)
+
+Lasso_y_train_hat <- predict(Lasso, x_train, s = Lasso$lambda.min)
+Lasso_y_test_hat <- predict(Lasso, x_test, s = Lasso$lambda.min)
+
+y_train <- as.numeric(y_train)
+y_test <- as.numeric(y_test)
+
+Lasso_RSS_train <- (y_train - Lasso_y_train_hat)^2
+Lasso_RSS_test <- (y_test - Lasso_y_test_hat)^2 
+Lasso_mse_train <- apply(Lasso_RSS_train, 2, mean)
+Lasso_mse_test <- apply(Lasso_RSS_test, 2, mean)
+
+coef(Lasso)
+
+Lasso_lambda_min_mse_train <- Lasso_mse_train[which.min(Lasso_mse_train)] %>% print()
+Lasso_lambda_min_mse_test <- Lasso_mse_test[which.min(Lasso_mse_test)] %>% print()
+```
+
+
+We can see above the Coefficients of our Lasso regression. Following it is our two MSE's for this penalized Ridge Regression. They are Train MSE and Test MSE. 
+
+
+# The Truth About Linear Models For Our Problem
+Our problem is inherently a classification one. We want to predict Win or Loss. Linear Models requires a numeric end result, we adjusted our result to, 0 for Loss and 1 for Win, but the algorithms are not being utilized correctly. These models can give us a result but its not exactly correct. We can look at these predictions, very roughly and with a grain of salt, as probability that the Blue team will win. Therefore, a .7 prediction would mean a 70% chance probability of a win. Though we did utilize it to show some interesting features realistically, we will be utilized a decision tree model. 
+
+# Decision Tree Based Models
+We can utilize a basic Tree, a Random Forest, and Boosting to get predictions. 
+
+#### We need to put our data into a new format
+Below we are preparing out data for the tree based models. We needed to convert our results into a factor to do a classification model. We are also going to prepare our formula for the trees, which includes are predictors from our base dataset. 
+
+```{r}
+train_tree <- linear_train_15
+test_tree <- linear_test_15
+
+train_tree <- train_tree %>% select(-X15.X)
+test_tree <- test_tree %>% select(-X15.X)
+
+train_tree$X15.bResult <- as.factor(train_tree$X15.bResult)
+test_tree$X15.bResult <- as.factor(test_tree$X15.bResult)
+
+f1 <- as.formula(X15.bResult ~ .)
+```
+
+
+#### A Basic Decision Tree
+
+```{r}
+tree_final_15 <- rpart(f1,
+                  train_tree, 
+                  method = "class")
+
+yhat.train.tree <- predict(tree_final_15, train_tree)
+yhat.test.tree <- predict(tree_final_15, test_tree)
+
+
+colnames(yhat.train.tree) <- c("loss","win")
+colnames(yhat.test.tree) <- c("loss","win")
+
+
+yhat.train.tree <- as.data.frame(yhat.train.tree)
+yhat.train.tree <- yhat.train.tree %>% mutate(actual = (yhat.train.tree$win > yhat.train.tree$loss))
+
+
+yhat.test.tree <- as.data.frame(yhat.test.tree)
+yhat.test.tree <- yhat.test.tree %>% mutate(one_is_bigger = (yhat.test.tree$win > yhat.test.tree$loss))
+
+
+tree_error_rate_train <- 1 - ((length(yhat.train.tree[yhat.train.tree == TRUE])) / nrow(yhat.train.tree))
+tree_error_rate_test <- 1 - ((length(yhat.test.tree[yhat.test.tree == TRUE])) / nrow(yhat.test.tree))
+
+
+tree_error_rate_train
+tree_error_rate_test
+```
+
+
+The above results show the error in their predictions for the Train and Test data respectively for our Basic Tree. You cannot compare this to MSE. 
+
+#### A Graph Of Our Tree
+
+```{r}
+rpart.plot(tree_final_15)
+```
+
+
+#### Random Forest 
+
+```{r}
+rf_final_15 <- randomForest(f1,
+                         train_tree,
+                         ntree=250,
+                         do.trace=F)
+
+
+rf_y_train_hat <- predict(rf_final_15, train_tree)
+rf_y_test_hat <- predict(rf_final_15, test_tree)
+
+rf_error_dataset_train <- cbind.data.frame(rf_y_train_hat, train_tree$X15.bResult)
+rf_error_dataset_train <- rf_error_dataset_train %>%  
+                              mutate(correct_prediction = 
+                                       rf_error_dataset_train$rf_y_train_hat == rf_error_dataset_train$`train_tree$X15.bResult`)
+
+rf_error_dataset_test <- cbind.data.frame(rf_y_test_hat, test_tree$X15.bResult)
+rf_error_dataset_test <- rf_error_dataset_test %>%  
+                             mutate(correct_prediction = 
+                                       rf_error_dataset_test$rf_y_test_hat == rf_error_dataset_test$`test_tree$X15.bResult`)
+
+
+rf_error_rate_train <- 1 - (length(rf_error_dataset_train[rf_error_dataset_train == TRUE]) / length(rf_error_dataset_train$correct_prediction))
+rf_error_rate_test <- 1 - (length(rf_error_dataset_test[rf_error_dataset_test == TRUE]) / length(rf_error_dataset_test$correct_prediction))
+
+rf_error_rate_train
+rf_error_rate_test
+```
+
+
+Above output are the error prediction rates for the Train and Test for our Random Forest model. They can be compared to our Tree's error prediction rate but not to MSE again. We can see that our Random Forest predicts much better than our Basic Tree. 
+
+#### A Graph Of Our Nodes
+
+```{r}
+varImpPlot(rf_final_15)
+```
+
+
+#### Boosting
+We needed to remove some rows that did not have variance in the predictors for this minute. We utilized a boosting model. This model only allows us to predict numerically and we can again calculate an MSE. Much like earlier we cannot compare MSEs to error rate for the other trees.
+
+```{r}
+boost_final_15 <- gbm(f1,
+                      data = train_tree,
+                      distribution = "gaussian",
+                      n.trees = 250,
+                      interaction.depth = 2,
+                      shrinkage = 0.001)
+
+
+relative.influence(boost_final_15)
+
+train_boost_yhat_btree <- predict(boost_final_15, train_tree, n.trees = 250)
+train_boost_mse_btree <- mean((train_boost_yhat_btree - y_train) ^ 2)
+
+test_boost_yhat_btree <- predict(boost_final_15, test_tree, n.trees = 250)
+test_boost_mse_btree <- mean((test_boost_yhat_btree - y_test) ^ 2)
+
+View(train_boost_yhat_btree)
+
+train_boost_mse_btree
+test_boost_mse_btree
+```
+
+
+We can see the influence of each predictor for our model in the above graphic. After which are the two MSEs for Train and Test respectively for our boosting model. 
+
+
+# What Model To Use For Our Other Minutes
+We believe that because our problem is a classification problem that we need to use the models that are best for this in our case it is between a Basic Decision Tree and A Random Forest. The Random Forest's Error rate on the text prediction is `r rf_error_rate_test` which is much lower than the error rate for our Basic tree, `r tree_error_rate_test`. We will proceeed by choosing the Random Forest model to solve our problem and use this algorithm to create the models for each minute. 
+
+
+# Creating A Loop To Model Each minute From 1 to 60
+We have 60 Datasets inside a list. Each dataset is a unique minute. Inside the dataset is mostly cumulative information of the game. We are going to run a loop that will pull out and model each dataset in the list. This will give us a Random Forest model for each minute and we can make updated predictions throughout a game. 
+
 

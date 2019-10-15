@@ -206,6 +206,7 @@ names(match)[2] <- "matchname"
 match$matchname <- gsub(".*=","",match$matchname)
 final <- left_join(final_x, match, by = "matchname")
 
+
 final_list <- split(final, final$min)
 
 
