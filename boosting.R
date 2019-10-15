@@ -7,10 +7,9 @@ library(rpart.plot)
 library(randomForest)
 library(gbm)
 library(glmnet)
-install.packages("rpart")
 library(rpart)
-install.packages("rpart.plot")
 library("rpart.plot")
+
 ## set a standard seed number for reproducible results
 set.seed(123456)
 ## This is our new dataset for the tests
@@ -20,19 +19,14 @@ final_15$train <- sample(c(0, 1), nrow(final_15), replace = TRUE, prob = c(.3, .
 test <- final_15 %>% filter(train == 0)
 train <- final_15 %>% filter(train == 1)
 
-x_train <- train %>% select(-X15.bResult, -train, -X15.matchname, -X15.min)
 y_train <- train %>% select(X15.bResult)
-x_test <- test %>% select(-X15.bResult, -train, -X15.matchname, -X15.min)
 y_test <- test %>% select(X15.bResult)
-
-x_train <- as.matrix(x_train)
 y_train <- as.matrix(y_train)
-x_test <- as.matrix(x_test)
 y_test <- as.matrix(y_test)
 
 ## Creating The Test And Train For The Trees
-train_tree <- train %>% select(-train, -X15.matchname, -X15.min)
-test_tree <- test %>% select(-train, -X15.matchname, -X15.min)
+train_tree <- train %>% select(-train, -X15.matchname, -X15.min,-X15.baron_accum,-X15.elder_dragon_accum,-X15.nexus_turret_accum)
+test_tree <- test %>% select(-train, -X15.matchname, -X15.min,-X15.baron_accum,-X15.elder_dragon_accum,-X15.nexus_turret_accum)
 
 ## Unline Regression Models Trees and Forests Can Do Classification
 train_tree$X15.bResult <- as.factor(train_tree$X15.bResult)
@@ -71,6 +65,6 @@ test_boost_final_15 <- gbm(f1,
                       shrinkage = 0.001)
 relative.influence(test_boost_final_15)
 test_boost_yhat_btree <- predict(test_boost_final_15, test_tree, n.trees = 5000)
-test_boost_mse_btree <- mean((test_boost_yhat_btree - y_train) ^ 2)
+test_boost_mse_btree <- mean((test_boost_yhat_btree - y_test) ^ 2)
 ### MSE for Test Data
 print(test_boost_mse_btree)
