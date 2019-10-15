@@ -30,7 +30,7 @@ lst <- list()
 ### train_set spli
 
 
-for (i in 1:10){
+for (i in 15:30){
   
   df <- final %>% filter(min == i)
   
@@ -48,7 +48,7 @@ for (i in 1:10){
   
   rf_train <- randomForest(f1,
                           train,
-                          ntree=5,
+                          ntree=500,
                           do.trace= T)
   
   
@@ -76,6 +76,12 @@ for (i in 1:10){
 } 
 
 View(lst)
+
+df <- data.frame(matrix(unlist(lst),ncol = 3,byrow = T))
+
+for(x in 1:30){
+  print(lst[[x]])
+}
   
 
 
