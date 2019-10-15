@@ -1,0 +1,209 @@
+---
+title: "BA 810 - Team 8 - Group Project"
+author: "Tyler McMurray, Siyu Liu, Zinan Chen, Senbo Zhang, Qiuhao Chenyong"
+date: "October 16, 2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# League of Legends
+League of Legends, known also in the gaming world as LoL for short, is a massively popular video game created by Riot Games and released in 2009. It is speculated that there are over 80 million active monthly users for League of Legends and 27 million active daily players, this game is massive by any standard. With such a large player base also comes a large fan following for its league games with professional video game players.
+
+
+# We Are Looking To Predict If A Team Will Win or Lose Their Game
+The problem we are looking to solve is correctly predicting a win or lose in their game. To go a bit further we want to create models that can predict if a team will win or lose their game for each minute the game plays on for until minute 60, which very few games go past this time. Each model will use the information from that minute and prior to make the best prediction. In total we should have 60 total models that will help solve our problem of predicting if the game will end in a win or lose for a certain team. 
+
+
+# The Importance Of Our Predictions And The Solution We Offer
+Our predictions will have signifigant use for multiple reasons. One use would be for gambling. An accruate prediction could allow for better gambling risk mitigation or arbtitrage oppurtunities. 
+
+
+# The Libraries We Used For This Project
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(varhandle)
+library(plyr)
+library(bigrquery)
+library(scales)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(gbm)
+library(glmnet)
+```
+
+### We Needed To Set A Seed For This Project For Reproducible Results
+
+```{r}
+set.seed(123456)
+```
+
+
+
+
+
+
+
+# Which Model Will Offer Us The Best Predictions 
+### We Are Going To Try Many Supervised Machine Learning Algorithms To Find The Most Appropriate One For Our Problem
+
+### We Chose Minute 15 Data To Find Out Which Model Was Best
+Here We created our dataset, final_15, by pulling it from the list we created when we filtered our aggregate dataset with all of the minutes so each dataset only has the correct minute in it. To be sure we utilized the unique function in order to check which minutes were in the data set. Only minute 15 was in the column, perfect. Now is also a good time to check if we properly cleaned the data again by check to see how many missing values were in our data set in total. Which there were none. 
+
+```{r}
+final_15 <- as.data.frame(final_list[15])
+
+unique(final_15$X15.min)
+
+sum(is.na(final_15))
+```
+
+
+# We Have Our Dataset and We need to Create Train and Test Datsets From Our Minute 15 Dataset, final_15
+### We Are Going To Create Them For Our Linear Regression Models
+We Also prepped some of the work for later by creating the variable xnames which we will use in our forward linear regression loop. 
+
+```{r}
+smp_size <- floor(0.70 * nrow(final_15))
+
+train_ind <- sample(seq_len(nrow(final_15)), size = smp_size)
+
+linear_train_15 <- final_15[train_ind, ]
+linear_test_15 <- final_15[-train_ind, ]
+
+xnames <- colnames(final_15)
+xnames <- xnames[!xnames %in% c("X15.min", "X15.matchname", "X15.bResult")]
+```
+
+
+# Lets Do One Of Our Most Simplistic Models
+### Linear Regression With All Parameters
+
+```{r warning=FALSE}
+linear_train_15 <- linear_train_15 %>% select(-X15.matchname, -X15.min)
+
+linear_all_predictors <- lm(X15.bResult ~ ., data = linear_train_15)
+
+yhat_train_15_linear <- predict(linear_all_predictors, linear_train_15)
+mse_train_15_linear <- mean((linear_train_15$X15.bResult - yhat_train_15_linear) ^ 2)
+
+yhat_test_15_linear <- predict(linear_all_predictors, linear_test_15)
+mse_test_15_linear <- mean((linear_test_15$X15.bResult - yhat_test_15_linear) ^ 2)
+
+all_predictors_train_mse <- mse_train_15_linear
+all_predictors_test_mse <- mse_test_15_linear
+
+all_predictors_train_mse
+all_predictors_test_mse
+```
+ The ouput printed is the Train MSE and the Test MSE, respectively. This is our MSE's when all of the predictors were utilized to figure out our predictions. 
+ 
+ 
+# Lets Do Some Step-Wise Regression 
+### We Can Do Both Forward And Backward Selection For Our Linear Model
+There are multiple ways to tackle this problem. I will show you two ways a loop for forward selection and a function for backward selection. 
+
+
+#### Forward Selection
+First we are going to start our formula with just an intercept and then add predictors. We are going to store the results in a tibble, which we will also utilize in our loop. 
+
+```{r warning=FALSE}
+fit_linear_15 <- lm(X15.bResult ~ 1, data = linear_train_15)
+
+yhat_train_15_linear <- predict(fit_linear_15, linear_train_15)
+mse_train_15_linear <- mean((linear_train_15$X15.bResult - yhat_train_15_linear) ^ 2)
+
+yhat_test_15_linear <- predict(fit_linear_15, linear_test_15)
+mse_test_15_linear <- mean((linear_test_15$X15.bResult - yhat_test_15_linear) ^ 2)
+
+log_fw <-
+  tibble(
+    xname = "intercept",
+    model = deparse(fit_linear_15$call),
+    mse_train = mse_train_15_linear,
+    mse_test = mse_test_15_linear
+  )
+
+
+while (length(xnames) > 0) {
+  best_mse_train_15_linear <- NA
+  best_mse_test_15_linear <- NA
+  best_fit_fw_15_linear <- NA
+  best_xname_15_linear <- NA
+  
+  
+  for (xname in xnames) {
+    fit_fw_tmp <- update(fit_linear_15, as.formula(paste0(". ~ . + ", xname)))
+    
+    
+    yhat_train_tmp <- predict(fit_fw_tmp, linear_train_15)
+    mse_train_tmp <- mean((linear_train_15$X15.bResult - yhat_train_tmp) ^ 2)
+    
+    
+    yhat_test_tmp <- predict(fit_fw_tmp, linear_test_15)
+    mse_test_tmp <- mean((linear_test_15$X15.bResult - yhat_test_tmp) ^ 2)
+    
+    
+    if (is.na(best_mse_test_15_linear) | mse_test_tmp < best_mse_test_15_linear) {
+      best_xname_15_linear <- xname
+      best_fit_fw_15_linear <- fit_fw_tmp
+      best_mse_train_15_linear <- mse_train_tmp
+      best_mse_test_15_linear <- mse_test_tmp
+    }
+  }
+  
+  log_fw <-
+    log_fw %>% add_row(
+      xname = best_xname_15_linear,
+      model = paste0(deparse(best_fit_fw_15_linear$call), collapse = ""),
+      mse_train = best_mse_train_15_linear,
+      mse_test = best_mse_test_15_linear
+    )
+  
+  fit_linear_15 <- best_fit_fw_15_linear
+  
+  xnames <- xnames[xnames!=best_xname_15_linear]
+}
+```
+
+
+#### Lets Take A Look At What Happened Visually 
+Reading the graph from left to right shows us what happened at each iteration. Each time a new predictor was added to our formula it was added, left being the first and right being the last. We can also see how each predictor affected MSE after it was added on to the formula from the past MSE to the left.
+
+```{r}
+ggplot(log_fw, aes(seq_along(xname), mse_test)) +
+  geom_point() +
+  geom_line() +
+  geom_point(aes(y=mse_train), color="blue") +
+  geom_line(aes(y=mse_train), color="blue") +
+  scale_x_continuous("Variables", labels = log_fw$xname, breaks = seq_along(log_fw$xname)) +
+  scale_y_continuous("MSE test") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+#### Backward Selection
+This process was much easier but does not show or store as much information as above. The end result shows the MSE for Train and Test, respectively.
+
+```{r}
+backwards_linear_15 <- linear_all_predictors
+
+backwards_linear_15 <- step(backwards_linear_15, direction = "backward")
+
+yhat_train_15_backwards <- predict(backwards_linear_15, linear_train_15)
+mse_train_15_backwards <- mean((linear_train_15$X15.bResult - yhat_train_15_linear) ^ 2)
+
+yhat_test_15_backwards <- predict(backwards_linear_15, linear_test_15)
+mse_test_15_backwards <- mean((linear_test_15$X15.bResult - yhat_test_15_linear) ^ 2)
+```
+
+
+Here are the results of the computed MSE's for Train and Test, respectively. 
+
+```{r}
+mse_train_15_backwards
+mse_test_15_backwards
+```
+
