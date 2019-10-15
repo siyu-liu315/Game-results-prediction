@@ -48,7 +48,7 @@ for (i in 1:60){
   rf_y_test_hat <- predict(rf_train, x_test)
   rf_y_train_hat <- predict(rf_train, x_train)
   
-  rf_error_dataset_test <- cbind.data.frame(i, rf_y_test_hat, y_test)
+  rf_error_dataset_test <- rbind.data.frame(rf_y_test_hat, y_test)
 } 
   
   
