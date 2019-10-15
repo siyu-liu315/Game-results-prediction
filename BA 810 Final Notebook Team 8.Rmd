@@ -90,6 +90,7 @@ xnames <- xnames[!xnames %in% c("X15.min", "X15.matchname", "X15.bResult")]
 
 ```{r warning=FALSE}
 linear_train_15 <- linear_train_15 %>% select(-X15.matchname, -X15.min)
+linear_test_15 <- linear_test_15 %>% select(-X15.matchname, -X15.min)
 
 linear_all_predictors <- lm(X15.bResult ~ ., data = linear_train_15)
 
@@ -294,8 +295,8 @@ We can utilize a basic Tree, a Random Forest, and Boosting to get predictions.
 Below we are preparing out data for the tree based models. We needed to convert our results into a factor to do a classification model. We are also going to prepare our formula for the trees, which includes are predictors from our base dataset. 
 
 ```{r}
-train_tree <- train %>% select(-train, -X15.matchname, -X15.min)
-test_tree <- test %>% select(-train, -X15.matchname, -X15.min)
+train_tree <- linear_train_15
+test_tree <- linear_test_15
 
 train_tree$X15.bResult <- as.factor(train_tree$X15.bResult)
 test_tree$X15.bResult <- as.factor(test_tree$X15.bResult)
