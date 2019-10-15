@@ -26,6 +26,7 @@ library(tidyverse)
 library(varhandle)
 library(plyr)
 library(bigrquery)
+library(plotly)
 library(scales)
 library(rpart)
 library(rpart.plot)
@@ -405,8 +406,6 @@ train_boost_mse_btree <- mean((train_boost_yhat_btree - y_train) ^ 2)
 test_boost_yhat_btree <- predict(boost_final_15, test_tree, n.trees = 250)
 test_boost_mse_btree <- mean((test_boost_yhat_btree - y_test) ^ 2)
 
-View(train_boost_yhat_btree)
-
 train_boost_mse_btree
 test_boost_mse_btree
 ```
@@ -420,6 +419,98 @@ We believe that because our problem is a classification problem that we need to 
 
 
 # Creating A Loop To Model Each minute From 1 to 60
-We have 60 Datasets inside a list. Each dataset is a unique minute. Inside the dataset is mostly cumulative information of the game. We are going to run a loop that will pull out and model each dataset in the list. This will give us a Random Forest model for each minute and we can make updated predictions throughout a game. 
+We have 60 Datasets inside a list. Each dataset is a unique minute. Inside the dataset is mostly cumulative information of the game. We are going to run a loop that will pull out and model each dataset. This will give us a Random Forest model for each minute and we can make updated predictions throughout a game. 
 
+```{r echo=T, results='hide'}
+final <- read.csv('final.csv')
+final$bResult <- as.factor(final$bResult)
+final <- final %>% select(-matchname)
+
+lst <- list()
+
+f2 <- as.formula(bResult ~ .)
+
+for (i in 1:60){
+  
+  df <- final %>% filter(min == i)
+  
+  df$train <- sample(c(0, 1), nrow(df), replace = TRUE, prob = c(.3, .7))
+  
+  test <- df %>% filter(train == 0)
+  train <-df %>% filter(train == 1)
+  
+  x_train <- train %>% select(-train)
+  y_train <- train %>% select(bResult)
+  
+  x_test <- test %>% select(-train)
+  y_test <- test %>% select(bResult)
+  
+  
+  rf_train <- randomForest(f2,
+                          x_train,
+                          ntree = 250,
+                          do.trace= T)
+  
+  
+  rf_y_train_hat <- predict(rf_train, x_train)
+  rf_y_test_hat <- predict(rf_train, x_test)
+  
+  
+  rf_error_dataset_train <- cbind.data.frame(rf_y_train_hat, y_train)
+  rf_error_dataset_train <- rf_error_dataset_train %>%  
+                               mutate(correct_prediction = 
+                                   rf_error_dataset_train$rf_y_train_hat == rf_error_dataset_train$bResult)
+  
+  
+  rf_error_dataset_test <- cbind.data.frame(rf_y_test_hat, y_test)
+  rf_error_dataset_test <- rf_error_dataset_test %>%  
+                              mutate(correct_prediction = 
+                                   rf_error_dataset_test$rf_y_test_hat == rf_error_dataset_test$bResult)
+  
+  
+  rf_error_rate_train <- 1 - (length(rf_error_dataset_train[rf_error_dataset_train == TRUE]) / length(rf_error_dataset_train$correct_prediction))
+  rf_error_rate_test <- 1 - (length(rf_error_dataset_test[rf_error_dataset_test == TRUE]) / length(rf_error_dataset_test$correct_prediction))
+  
+  lst[[i]] <- cbind.data.frame(i, rf_error_rate_train, rf_error_rate_test)
+    
+}
+```
+
+Here We ran A loop around the final dataset filtering for each minute. We utilized a filter method from the final dataset sheet instead of utilizing the list. The list was another visual aid to understand our data. The models should not change as the data is still the same. 
+
+
+# Putting Our Results into A Dataframe
+
+```{r}
+results_df <- data.frame(matrix(unlist(lst),ncol = 3,byrow = T))
+colnames(results_df) <- c("minute", "Train_Error_Rate", "Test_Error_Rate")
+results_df
+```
+
+
+# What Happens To Our Error Prediction
+As expected with the first model, which was using minute 1 data, was almost nearly a guess as it was close to a 50 percent error rate for predicting win or loss. This was mostly due to the lack of data in our first model as not much had occured in the game that we had recorded. As time went on, our error rate decreased as a victor was becoming more evident until about minute 30. After Which it increases again, until close to the 60 minute mark and it shoots back down. 
+
+### Train Error Rate
+
+```{r}
+results_df_train <- ggplot(results_df, aes(x = minute, y = Train_Error_Rate)) + 
+  geom_line() +
+  geom_point()+
+  ggtitle("Train Error Rate By Minute") 
+
+ggplotly(results_df_train)
+  
+```
+
+### Test Error Rate Graph
+
+```{r}
+results_df_test <- ggplot(results_df, aes(x = minute, y = Test_Error_Rate)) + 
+  geom_line() +
+  geom_point()+
+  ggtitle("Test Error Rate By Minute")
+
+ggplotly(results_df_test)
+```
 
