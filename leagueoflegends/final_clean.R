@@ -165,26 +165,26 @@ merge[is.na(merge)] <- 0
 ##accumulate number
 yy <- merge %>% group_by(matchname) %>% 
   arrange(matchname, min) %>% 
-  dplyr::mutate(top_outer_cum = cumsum(top_outer),
-                top_inner_cum = cumsum(top_inner),
-                top_base_cum = cumsum(top_base),
-                mid_outer_cum = cumsum(mid_outer),
-                mid_inner_cum = cumsum(mid_inner),
-                mid_base_cum = cumsum(mid_base),
-                mid_inhibitor_cum = cumsum(mid_inhibitor),
-                bot_outer_cum = cumsum(bot_outer),
-                bot_inner_cum = cumsum(bot_inner),
-                bot_base_cum = cumsum(bot_base),
-                nexus_turret_cum = cumsum(nexus_turret),
-                killer_cum = cumsum(killer),
-                air_dragon_cum = cumsum(AIR_DRAGON),
-                earth_dragon_cum = cumsum(EARTH_DRAGON),
-                fire_dragon_cum = cumsum(FIRE_DRAGON),
-                water_dragon_cum = cumsum(WATER_DRAGON),
-                dragon_cum = cumsum(DRAGON),
-                baron_cum = cumsum(BARON_NASHOR),
-                elder_dragon_cum = cumsum(ELDER_DRAGON),
-                rift_herald_cum = cumsum(RIFT_HERALD))
+  dplyr::mutate(top_outer_accum = cumsum(top_outer),
+                top_inner_accum = cumsum(top_inner),
+                top_base_accum = cumsum(top_base),
+                mid_outer_accum = cumsum(mid_outer),
+                mid_inner_accum = cumsum(mid_inner),
+                mid_base_accum = cumsum(mid_base),
+                mid_inhibitor_accum = cumsum(mid_inhibitor),
+                bot_outer_accum = cumsum(bot_outer),
+                bot_inner_accum = cumsum(bot_inner),
+                bot_base_accum = cumsum(bot_base),
+                nexus_turret_accum = cumsum(nexus_turret),
+                killer_accum = cumsum(killer),
+                air_dragon_accum = cumsum(AIR_DRAGON),
+                earth_dragon_accum = cumsum(EARTH_DRAGON),
+                fire_dragon_accum = cumsum(FIRE_DRAGON),
+                water_dragon_accum = cumsum(WATER_DRAGON),
+                dragon_accum = cumsum(DRAGON),
+                baron_accum = cumsum(BARON_NASHOR),
+                elder_dragon_accum = cumsum(ELDER_DRAGON),
+                rift_herald_accum = cumsum(RIFT_HERALD))
 
 yy <- yy[-(3:24)]
 

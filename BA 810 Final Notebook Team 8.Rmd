@@ -34,6 +34,7 @@ library(gbm)
 library(glmnet)
 ```
 
+
 ### We Needed To Set A Seed For This Project For Reproducible Results
 
 ```{r}
@@ -42,8 +43,12 @@ set.seed(123456)
 
 
 
-
-
+### we save clean data in the csv for quick loading. 
+### we split whole dataset into 60 ones based on minutes and included all in  one list 
+```{r}
+read.csv('final.csv')
+final_list <- split(final, final$min)
+```
 
 
 # Which Model Will Offer Us The Best Predictions 
@@ -186,6 +191,8 @@ ggplot(log_fw, aes(seq_along(xname), mse_test)) +
 
 #### Backward Selection
 This process was much easier but does not show or store as much information as above. The end result shows the MSE for Train and Test, respectively.
+
+
 
 ```{r}
 backwards_linear_15 <- linear_all_predictors
