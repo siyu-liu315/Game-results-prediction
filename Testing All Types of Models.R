@@ -19,6 +19,8 @@ final_15 <- as.data.frame(final_list[15])
 
 ## make sure only the minute 15 is in the dataframe
 unique(final_15$X15.min)
+sum(is.na(final_15))
+
 
 ## 70% of the sample size is our Train
 smp_size <- floor(0.70 * nrow(final_15))
@@ -134,7 +136,6 @@ ggplot(log_fw, aes(seq_along(xname), mse_test)) +
 
 
 
-
 ## We Can Create the Backward Selection In an easier Manner with The step function
 
 backwards_linear_15 <- linear_all_predictors
@@ -157,14 +158,12 @@ mse_test_15_backwards
 
 ## Let Us Create The Same Train And Test For Our Other Models
 
-final_15$train <- sample(c(0, 1), nrow(final_15), replace = TRUE, prob = c(.3, .7))
-test <- final_15 %>% filter(train == 0)
-train <- final_15 %>% filter(train == 1)
 
-x_train <- train %>% select(-X15.bResult, -train, -X15.matchname, -X15.min)
-y_train <- train %>% select(X15.bResult)
-x_test <- test %>% select(-X15.bResult, -train, -X15.matchname, -X15.min)
-y_test <- test %>% select(X15.bResult)
+x_train <- linear_train_15%>% select(-X15.bResult, -train, -X15.matchname, -X15.min)
+y_train <- linear_train_15 %>% select(X15.bResult)
+x_test <- linear_test_15 %>% select(-X15.bResult, -train, -X15.matchname, -X15.min)
+y_test <- linear_test_15 %>% select(X15.bResult)
+
 
 x_train <- as.matrix(x_train)
 y_train <- as.matrix(y_train)
@@ -231,22 +230,6 @@ test_tree$X15.bResult <- as.factor(test_tree$X15.bResult)
 
 f1 <- as.formula(X15.bResult ~ .)
 
-
-## Logistic Regression
-log_final_15 <- glm(f1, family = "binomial", data = train_tree)
-
-coef(log_final_15)
-
-## Make Our Predictions
-yhat_train_15_log <- predict(log_final_15, train_tree)
-yhat_test_15_log <- predict(log_final_15, test_tree)
-
-View(yhat_train_15_log)
-
-
-
-
-
 ## Create A Tree
 
 tree_final_15 <- rpart(f1,
@@ -257,11 +240,18 @@ tree_final_15 <- rpart(f1,
 yhat.train.tree <- predict(tree_final_15, train_tree)
 yhat.test.tree <- predict(tree_final_15, test_tree)
 
+colnames(yhat.train.tree) <- c("loss","win")
+colnames(yhat.train.tree) <- c("loss","win")
+
+yhat.train.tree <- yhat.train.tree %>% mutate(one_is_bigger = (yhat.train.tree$win > yhat.train.tree$loss))
+
 View(yhat.train.tree)
 
 ## Plot The Tree
 
 rpart.plot(tree_final_15)
+
+
 
 
 
@@ -298,4 +288,36 @@ rf_error_rate_test <- 1 - (length(rf_error_dataset_test[rf_error_dataset_test ==
 rf_error_rate_train
 rf_error_rate_test
 
+## Boosted Trees for train data
+train_boost_final_15 <- gbm(f1,
+                            data = train_tree,
+                            distribution = "gaussian",
+                            n.trees = 5000,
+                            interaction.depth = 2,
+                            shrinkage = 0.001)
 
+relative.influence(train_boost_final_15)
+
+train_boost_yhat_btree <- predict(train_boost_final_15, train_tree, n.trees = 5000)
+test_boost_yhat_btree <- predict(train_boost_final_15, test_tree, n.trees = 5000)
+
+train_boost_mse_btree <- mean((train_boost_yhat_btree - y_train) ^ 2)
+test_boost_mse_btree <- mean((test_boost_yhat_btree - y_test) ^ 2)
+
+print(train_boost_mse_btree)
+
+## Boosted Trees for test data
+test_boost_final_15 <- gbm(f1,
+                           data = test_tree,
+                           distribution = "gaussian",
+                           n.trees = 5000,
+                           interaction.depth = 2,
+                           shrinkage = 0.001)
+
+relative.influence(test_boost_final_15)
+
+test_boost_yhat_btree <- predict(test_boost_final_15, test_tree, n.trees = 5000)
+test_boost_mse_btree <- mean((test_boost_yhat_btree - y_train) ^ 2)
+
+### MSE for Test Data
+print(test_boost_mse_btree)
