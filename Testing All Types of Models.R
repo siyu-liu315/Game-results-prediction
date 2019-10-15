@@ -206,7 +206,7 @@ rpart.plot(tree_final_15)
 ## Lets Take A Look At Random Forest
 
 rf_train <- randomForest(f1,
-                         train,
+                         train_tree,
                          ntree=100,
                          do.trace=T)
 varImpPlot(rf_train)
