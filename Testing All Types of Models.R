@@ -41,7 +41,8 @@ linear_all_predictors <- lm(X15.bResult ~ ., data = linear_train_15)
 
 yhat_train_15_linear <- predict(linear_all_predictors, linear_train_15)
 mse_train_15_linear <- mean((linear_train_15$X15.bResult - yhat_train_15_linear) ^ 2)
-yhat_test_15_linear <- predict(linear_all_predictors, linear_train_15)
+
+yhat_test_15_linear <- predict(linear_all_predictors, linear_test_15)
 mse_test_15_linear <- mean((linear_test_15$X15.bResult - yhat_test_15_linear) ^ 2)
 
 all_predictors_train_mse <- mse_train_15_linear
@@ -60,8 +61,9 @@ fit_linear_15 <- lm(X15.bResult ~ 1, data = linear_train_15)
 
 yhat_train_15_linear <- predict(fit_linear_15, linear_train_15)
 mse_train_15_linear <- mean((linear_train_15$X15.bResult - yhat_train_15_linear) ^ 2)
-yhat_test_15_linear <- predict(fit_linear_15, linear_train_15)
-mse_test_15_linear <- mean((linear_train_15$X15.bResult - yhat_test_15_linear) ^ 2)
+
+yhat_test_15_linear <- predict(fit_linear_15, linear_test_15)
+mse_test_15_linear <- mean((linear_test_15$X15.bResult - yhat_test_15_linear) ^ 2)
 
 ##create a log for our results
 
@@ -130,8 +132,26 @@ ggplot(log_fw, aes(seq_along(xname), mse_test)) +
 
 
 
+## We Can Create the Backward Selection In an easier Manner with The step function
 
-## Let Us Create The Same Train And Test
+backwards_linear_15 <- linear_all_predictors
+
+backwards_linear_15 <- step(backwards_linear_15, direction = "backward")
+
+yhat_train_15_backwards <- predict(backwards_linear_15, linear_train_15)
+mse_train_15_backwards <- mean((linear_train_15$X15.bResult - yhat_train_15_linear) ^ 2)
+
+yhat_test_15_backwards <- predict(backwards_linear_15, linear_test_15)
+mse_test_15_backwards <- mean((linear_test_15$X15.bResult - yhat_test_15_linear) ^ 2)
+
+##Lets Look At MSE
+mse_train_15_backwards
+mse_test_15_backwards
+
+
+
+
+## Let Us Create The Same Train And Test For Our Other Models
 
 final_15$train <- sample(c(0, 1), nrow(final_15), replace = TRUE, prob = c(.3, .7))
 test <- final_15 %>% filter(train == 0)
@@ -219,7 +239,7 @@ tree_final_15 <- rpart(f1,
 yhat.train.tree <- predict(tree_final_15, train_tree)
 yhat.test.tree <- predict(tree_final_15, test_tree)
 
-
+View(yhat.train.tree)
 
 ## Plot The Tree
 
