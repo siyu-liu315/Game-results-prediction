@@ -1,10 +1,9 @@
 ---
-title: "BA 810 - Team 8 - Group Project"
+title: "BA 810 Team 8 Group Project"
 author: "Tyler McMurray, Siyu Liu, Zinan Chen, Senbo Zhang, Qiuhao Chenyong"
 date: "October 16, 2019"
 output:
   pdf_document: default
-  html_document: default
 ---
 
 # League of Legends
@@ -16,7 +15,7 @@ The problem we are looking to solve is correctly predicting a win or lose in the
 
 
 # The Importance Of Our Predictions And The Solution We Offer
-Our predictions will have signifigant use for multiple reasons. One use would be for gambling. An accruate prediction could allow for better gambling risk mitigation or arbtitrage oppurtunities. 
+Our predictions will have significant use for multiple reasons. One use would be for gambling. An accurate prediction could allow for better gambling risk mitigation or arbitrage opportunities. Riot Games might want to utilize these models to have a changing winner prediction for the audience. If the audience sees a clear winner they may want to root for the underdog, or it might encourage the competitors to try harder if they think they are losing. This will possibly allow for more entertaining games which will engross the fans. It could also be utilized by teams to help them strategize to win the game. 
 
 
 # The Libraries We Used For This Project
@@ -26,7 +25,6 @@ library(tidyverse)
 library(varhandle)
 library(plyr)
 library(bigrquery)
-library(plotly)
 library(scales)
 library(rpart)
 library(rpart.plot)
@@ -494,23 +492,35 @@ As expected with the first model, which was using minute 1 data, was almost near
 ### Train Error Rate
 
 ```{r}
-results_df_train <- ggplot(results_df, aes(x = minute, y = Train_Error_Rate)) + 
+ggplot(results_df, aes(x = minute, y = Train_Error_Rate)) + 
   geom_line() +
   geom_point()+
   ggtitle("Train Error Rate By Minute") 
-
-ggplotly(results_df_train)
-  
 ```
+
 
 ### Test Error Rate Graph
 
 ```{r}
-results_df_test <- ggplot(results_df, aes(x = minute, y = Test_Error_Rate)) + 
+ggplot(results_df, aes(x = minute, y = Test_Error_Rate)) + 
   geom_line() +
   geom_point()+
   ggtitle("Test Error Rate By Minute")
-
-ggplotly(results_df_test)
 ```
 
+
+# The End Result
+We have created 60 Models that will now allow us to predict the results of a game for each minute that game lasts for up to minute 60. These models can help to aid many of the problems we addressed at the start of our problem. 
+
+
+# Contribution Statement
+
+Georgios Zervas - We utilized a lot of base code from his work and labs. We also utilized his guidance with help solving our problem.
+
+Ben Thompson - Helped by providing guidance throughout our project. 
+
+StackOverflow - We utilized this resource to ask questions and find answers to our questions.
+
+Kaggle - We utilized this resourse to find our datasets that we used to solve our problem. www.kaggle.com
+
+"Chuck Ephron" - This was the username of the person that created our datasets from Kaggle. https://www.kaggle.com/chuckephron/leagueoflegends/kernels
