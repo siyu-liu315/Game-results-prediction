@@ -6,7 +6,7 @@ library(bigrquery)
 
 ########################construction##############################
 ### shorten the address to unique game ID
-structures <- read.csv("leagueoflegends/structures.csv")
+structures <- read.csv("Data/leagueoflegends/structures.csv")
 structures$Address <- gsub(".*=","",structures$Address)
 structures$Time <- as.integer(structures$Time) + 1
 
@@ -73,7 +73,7 @@ clean_tower <- rbind(tower_keep, tower_agg)
 
 ########################################clean gold###########
 ### clean gold ##
-gold <- read.csv("leagueoflegends/gold.csv")
+gold <- read.csv("Data/leagueoflegends/gold.csv")
 clean_gold <- gold %>% 
   filter(is.na(min_61)) %>%  
   select(Address:min_60) %>% 
@@ -95,7 +95,7 @@ gold$matchname <- gsub(".*=","",gold$matchname)
 
 #########################################monster#########################################
 
-monster <- read.csv("leagueoflegends/monsters.csv")
+monster <- read.csv("Data/leagueoflegends/monsters.csv")
 match_id <- unique(monster$Address)
 
 monster <- monster %>% 
@@ -131,7 +131,7 @@ names(agg)[2] <- 'min'
 clean_monster <- rbind(keep, agg)
 
 ###################### join kills.and monster & to 
-kills <- read.csv("leagueoflegends/kills.csv")
+kills <- read.csv("Data/leagueoflegends/kills.csv")
 kills$Time <- as.integer(kills$Time) + 1
 kills$Address <- gsub(".*=","",kills$Address)
 killing <- kills %>%
@@ -200,7 +200,7 @@ for (i in 1:60){
 }
 
 ####insert output to table
-matchinfo <- read.csv("leagueoflegends/matchinfo.csv")
+matchinfo <- read.csv("Data/leagueoflegends/matchinfo.csv")
 match <- matchinfo[c("bResult", "Address")]
 names(match)[2] <- "matchname"
 match$matchname <- gsub(".*=","",match$matchname)
@@ -210,12 +210,6 @@ final <- left_join(final_x, match, by = "matchname")
 final_list <- split(final, final$min)
 
 
-
-##DRAFT
-####change column name
-##names(b_tower)[1]<-"matchname"
-##names(b_tower)[2] <- 'min'
-##b_tower$matchname <- gsub(".*=","",monster$matchname)
 
 ##
 ##
