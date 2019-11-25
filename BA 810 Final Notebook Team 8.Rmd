@@ -45,7 +45,7 @@ set.seed(123456)
 We created the final dataset which is the final aggregation of all of our data into one place. We created a list which consisted of 60 parts each part had its own minute in it. Therefore, the first dataset were all minute 1 variables and games and the last were all minute 60 variables and games, and so on for each minute.
 
 ```{r}
-final <- read.csv('final.csv')
+final <- read.csv('Data/final.csv')
 final_list <- split(final, final$min)
 ```
 
