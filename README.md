@@ -1,4 +1,4 @@
-# 810-team-project
+# Game results prediction by supervised machine learning 
 
 ## first stage ##
 ## data cleaning ##
