@@ -1,10 +1,8 @@
 # Game results prediction by supervised machine learning 
 
-## first stage ##
-## data cleaning ##
-### output format: ###
-### column:  matchname，goldtop/mid/bottom diff， kill#，moster-kill# (dummy)，turrettop/mid/bottom destroy number ###
-### row: min 1 :min 60 ###
+# Clean Data structure 
+column:  matchname，goldtop/mid/bottom diff， kill#，moster-kill# (dummy)，turrettop/mid/bottom destroy number ###
+row: min 1 :min 60 ###
 
 # League of Legends
 League of Legends, known also in the gaming world as LoL for short, is a massively popular video game created by Riot Games and released in 2009. It is speculated that there are over 80 million active monthly users for League of Legends and 27 million active daily players, this game is massive by any standard. With such a large player base also comes a large fan following for its league games with professional video game players.
